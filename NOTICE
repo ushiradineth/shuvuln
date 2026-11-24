@@ -1,0 +1,25 @@
+shuvuln
+Copyright 2026 Ushira Dineth
+
+Licensed under the Apache License, Version 2.0.
+
+This product builds on the following projects. Each keeps its own licence.
+
+OpenHack
+  https://github.com/openhackai/OpenHack
+  The v2.0.0 release pinned in pkgs/openhack.nix is MIT-licensed. Later commits are
+  AGPL-3.0-only and are not used.
+
+Pi, through llm-agents.nix
+  https://github.com/earendil-works/pi
+  https://github.com/numtide/llm-agents.nix
+  MIT License.
+
+bounty-targets-data
+  https://github.com/arkadiyt/bounty-targets-data
+  MIT License. Read at run time in later phases and not redistributed.
+
+Claude-BugHunter
+  https://github.com/elementalsouls/Claude-BugHunter
+  Methodology content planned for skills/ is CC BY 4.0. Each copied file carries its
+  attribution and a note of any change.
