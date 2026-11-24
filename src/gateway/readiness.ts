@@ -10,22 +10,31 @@ export interface Readiness {
   detail: string
 }
 
+const STATUSES: readonly string[] = ["ready", "not_ready", "invalid"]
 const BY_EXIT_CODE: Record<number, ReadinessStatus> = { 0: "ready", 1: "not_ready", 2: "invalid" }
 
-function findStatus(value: unknown, depth = 0): ReadinessStatus | undefined {
-  if (depth > 4 || value === null || typeof value !== "object") return undefined
-  for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
-    if (typeof entry === "string" && ["ready", "not_ready", "invalid"].includes(entry)) {
-      if (key === "status" || key === "state" || key === "result") return entry as ReadinessStatus
-    }
-    if (typeof entry === "boolean" && key === "ready") return entry ? "ready" : "not_ready"
-    const nested = findStatus(entry, depth + 1)
-    if (nested) return nested
+function reportedStatus(stdout: string): ReadinessStatus | undefined {
+  try {
+    const parsed: unknown = JSON.parse(stdout)
+    const status = record(parsed)?.status
+    return typeof status === "string" && STATUSES.includes(status)
+      ? (status as ReadinessStatus)
+      : undefined
+  } catch {
+    return undefined
   }
-  return undefined
 }
 
-/** `pi auth check` prints ready, not_ready or invalid and exits 0, 1 or 2. */
+function record(value: unknown): Record<string, unknown> | undefined {
+  return value !== null && typeof value === "object"
+    ? (value as Record<string, unknown>)
+    : undefined
+}
+
+/**
+ * `pi auth check --json` prints `{"status": ...}` and exits 0 for ready, 1 for not ready and
+ * 2 for invalid. The printed status wins; the exit status stands in when Pi printed nothing.
+ */
 export function parseReadiness(
   provider: Provider,
   stdout: string,
@@ -33,24 +42,13 @@ export function parseReadiness(
   stderr = "",
   spawnError?: Error
 ): Readiness {
-  const trimmed = stdout.trim()
-  let status: ReadinessStatus = "unknown"
-  let detail = trimmed || stderr.trim()
   if (spawnError) {
-    detail = `Pi could not start: ${spawnError.message}`
-  } else {
-    try {
-      const parsed: unknown = JSON.parse(trimmed)
-      const found = findStatus(parsed)
-      if (found) status = found
-      else detail = JSON.stringify(parsed)
-    } catch {
-      const word = /\b(ready|not_ready|invalid)\b/.exec(trimmed)?.[1]
-      if (word) status = word as ReadinessStatus
-    }
-    if (status === "unknown" && exitCode !== null && BY_EXIT_CODE[exitCode]) {
-      status = BY_EXIT_CODE[exitCode] ?? "unknown"
-    }
+    const detail = `Pi did not run: ${spawnError.message}`
+    return { provider, status: "unknown", exitCode, detail: detail.slice(0, 400) }
   }
-  return { provider, status, exitCode, detail: detail.slice(0, 400) }
+  const trimmed = stdout.trim()
+  const status =
+    reportedStatus(trimmed) ??
+    (exitCode !== null ? (BY_EXIT_CODE[exitCode] ?? "unknown") : "unknown")
+  return { provider, status, exitCode, detail: (trimmed || stderr.trim()).slice(0, 400) }
 }

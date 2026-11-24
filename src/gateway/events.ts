@@ -9,6 +9,19 @@ export interface Usage {
 
 export type StopReason = "stop" | "length" | "toolUse" | "error" | "aborted" | "deferred"
 
+const STOP_REASONS: readonly string[] = [
+  "stop",
+  "length",
+  "toolUse",
+  "error",
+  "aborted",
+  "deferred",
+]
+
+export function isStopReason(value: string): value is StopReason {
+  return STOP_REASONS.includes(value)
+}
+
 export interface GatewayOutcome {
   /** Text blocks of the final assistant message. */
   text: string
@@ -21,16 +34,7 @@ export interface GatewayOutcome {
   error: string | null
 }
 
-const STOP_REASONS: readonly string[] = [
-  "stop",
-  "length",
-  "toolUse",
-  "error",
-  "aborted",
-  "deferred",
-]
-
-export function emptyUsage(): Usage {
+function emptyUsage(): Usage {
   return { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0, cost: { total: 0 } }
 }
 
@@ -68,8 +72,11 @@ export class PiEventReader {
   private retries = 0
   private toolExecutions = 0
   private settled = false
+  private aborted = false
   private sawHeader = false
-  private readonly failures: string[] = []
+  /** Why Pi stopped retrying, and the model's own last error. Detail for a failed run only. */
+  private retryError: string | undefined
+  private messageError: string | undefined
 
   push(line: string): void {
     if (!line.trim()) return
@@ -107,14 +114,12 @@ export class PiEventReader {
         return
       case "auto_retry_end":
         if (event.success === false) {
-          this.failures.push(
-            `Pi stopped retrying: ${text(event.finalError) ?? "the provider kept failing"}`
-          )
+          this.retryError = `Pi stopped retrying: ${text(event.finalError) ?? "the provider kept failing"}`
         }
         return
       case "agent_settled":
         this.settled = true
-        if (event.aborted === true) this.failures.push("Pi aborted the run.")
+        this.aborted = event.aborted === true
         return
       default:
         return
@@ -130,20 +135,28 @@ export class PiEventReader {
       .filter((part): part is string => part !== undefined)
       .join("")
     const reason = text(message.stopReason)
-    this.stopReason = reason && STOP_REASONS.includes(reason) ? (reason as StopReason) : null
+    this.stopReason = reason && isStopReason(reason) ? reason : null
     this.usage = readUsage(record(message.usage))
     const errorMessage = text(message.errorMessage)
-    if (errorMessage) this.failures.push(`Pi reported an error: ${errorMessage}`)
+    if (errorMessage) this.messageError = `Pi reported an error: ${errorMessage}`
   }
 
   finish(): GatewayOutcome {
-    const problems = [...this.failures]
-    if (!this.settled) problems.push("Pi exited before the run settled.")
+    const problems: string[] = []
+    if (this.aborted) problems.push("Pi aborted the run.")
     if (this.toolExecutions > 0) {
       problems.push(`Pi executed ${this.toolExecutions} tool call(s) although tools were disabled.`)
     }
+    if (!this.settled) problems.push("Pi exited before the run settled.")
     if (this.stopReason !== "stop") {
       problems.push(`Pi stopped with ${this.stopReason ?? "no assistant message"}.`)
+    }
+    if (problems.length > 0) {
+      problems.push(
+        ...[this.retryError, this.messageError].filter(
+          (reason): reason is string => reason !== undefined
+        )
+      )
     }
     return {
       text: this.text,

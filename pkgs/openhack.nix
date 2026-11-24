@@ -1,5 +1,5 @@
 {pkgs}: let
-  inherit (pkgs.lib) licenses meta optionalString optionals;
+  inherit (pkgs.lib) licenses meta optionals;
   version = "2.0.0";
 
   # Tag v2.0.0 is MIT. AGPL-3.0 applies only to commits after it.
@@ -36,7 +36,6 @@ in
     buildInputs = optionals pkgs.stdenv.hostPlatform.isLinux [pkgs.stdenv.cc.cc.lib];
 
     dontBuild = true;
-    dontAutoPatchelf = true;
 
     installPhase = ''
       runHook preInstall
@@ -45,10 +44,6 @@ in
       install -Dm644 THIRD_PARTY_NOTICES.md $out/share/openhack/THIRD_PARTY_NOTICES.md
       install -Dm644 DEPENDENCY-LICENSES.txt $out/share/openhack/DEPENDENCY-LICENSES.txt
       runHook postInstall
-    '';
-
-    preFixup = optionalString pkgs.stdenv.hostPlatform.isLinux ''
-      autoPatchelf $out
     '';
 
     meta = {

@@ -13,19 +13,17 @@ Usage:
   shuvuln --help                   Show this text
 `
 
-interface Arguments {
-  words: string[]
-  flags: Set<string>
-  values: Map<string, string>
-}
+type Arguments =
+  | { ok: true; words: string[]; flags: Set<string>; values: Map<string, string> }
+  | { ok: false; message: string }
 
-function parseArguments(argv: string[]): Arguments | string {
+function parseArguments(argv: string[]): Arguments {
   const words: string[] = []
   const flags = new Set<string>()
   const values = new Map<string, string>()
-  for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i]
-    if (arg === undefined) continue
+  const consumed = new Set<number>()
+  for (const [index, arg] of argv.entries()) {
+    if (consumed.has(index)) continue
     if (!arg.startsWith("--")) {
       words.push(arg)
       continue
@@ -35,22 +33,28 @@ function parseArguments(argv: string[]): Arguments | string {
       flags.add(name)
       continue
     }
-    if (name === "model") {
-      const value = inline ?? argv[i + 1]
-      if (value === undefined || value.startsWith("--")) return "--model needs a value"
-      values.set(name, value)
-      i += inline === undefined ? 1 : 0
+    if (name === "model" && inline !== undefined) {
+      values.set(name, inline)
       continue
     }
-    return `unknown option ${arg}`
+    const next = argv[index + 1]
+    if (name === "model" && next !== undefined && !next.startsWith("--")) {
+      values.set(name, next)
+      consumed.add(index + 1)
+      continue
+    }
+    return {
+      ok: false,
+      message: name === "model" ? "--model needs a value" : `unknown option ${arg}`,
+    }
   }
-  return { words, flags, values }
+  return { ok: true, words, flags, values }
 }
 
 async function main(argv: string[]): Promise<number> {
   const parsed = parseArguments(argv)
-  if (typeof parsed === "string") {
-    console.error(`${parsed}\n\n${USAGE}`)
+  if (!parsed.ok) {
+    console.error(`${parsed.message}\n\n${USAGE}`)
     return 2
   }
   const { words, flags, values } = parsed
@@ -61,7 +65,7 @@ async function main(argv: string[]): Promise<number> {
   }
   const agentDir = piAgentDir()
   if (group === "auth" && command === "status" && words.length === 2) {
-    const readiness = checkProviders(agentDir)
+    const readiness = await checkProviders(agentDir)
     if (flags.has("json")) {
       console.log(JSON.stringify(readiness, null, 2))
     } else {
@@ -70,7 +74,7 @@ async function main(argv: string[]): Promise<number> {
     return readiness.every((item) => item.status === "ready") ? 0 : 1
   }
   if (group === "auth" && command === "login" && words.length === 2) {
-    return openLogin(agentDir) ?? 1
+    return (await openLogin(agentDir)) ?? 1
   }
   if (group === "gateway" && command === "ping" && words.length === 2) {
     const model = values.get("model")

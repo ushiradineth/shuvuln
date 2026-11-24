@@ -219,7 +219,9 @@ Done on 2026-11-24, aarch64-darwin:
    release, hash verified), `pi` (bundled from llm-agents.nix, own agent directory), `shuvuln`.
 3. Model gateway in `src/gateway/`: spawns the bundled Pi with every isolation flag, parses the
    event stream, and reports usage, retries, tool executions (always a violation) and every reason a
-   run cannot be trusted. Unit tests cover the parser and the argument builder.
+   run cannot be trusted. Unit tests cover the parser, the argument builder, and the runner's
+   deadline, cancellation, refusal, bad-output and cannot-start paths against a stand-in Pi. No test
+   contacts a provider.
 4. Before login: `just auth-status` reports both providers `not_ready`. `just ping` fails with Pi's
    own hint and exit status 1.
 

@@ -31,6 +31,9 @@ just auth-status  # both providers should print ready
 just ping         # one tiny model call through the gateway
 ```
 
+Before the login, `just auth-status` prints `not_ready` for both providers and `just ping` fails
+with Pi's own hint. That is the expected starting state.
+
 shuvuln's Pi is separate from any other Pi on the machine. It is another binary with its own agent
 directory, `$SHUVULN_HOME/pi-agent` (`~/.local/share/shuvuln/pi-agent` by default), which holds the
 two logins and nothing else. shuvuln never calls a model API itself and never reads the system Pi's

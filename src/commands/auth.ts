@@ -1,10 +1,8 @@
 import { spawnSync } from "node:child_process"
-import { mkdtempSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
 import { gatewayEnvironment } from "../gateway/environment.ts"
-import { PROVIDERS, parseReadiness, type Provider, type Readiness } from "../gateway/readiness.ts"
+import { PROVIDERS, parseReadiness, type Readiness } from "../gateway/readiness.ts"
 import { piCommand } from "../gateway/run.ts"
+import { withTempDir } from "../gateway/tempdir.ts"
 
 const CHECK_TIMEOUT_MS = 30_000
 const LOGIN_FLAGS = [
@@ -15,18 +13,9 @@ const LOGIN_FLAGS = [
   "--no-mcp",
 ]
 
-function inTempDir<T>(run: (cwd: string) => T): T {
-  const cwd = mkdtempSync(join(tmpdir(), "shuvuln-auth-"))
-  try {
-    return run(cwd)
-  } finally {
-    rmSync(cwd, { recursive: true, force: true })
-  }
-}
-
 /** Asks shuvuln's own Pi whether each provider is logged in. Prints no credentials. */
-export function checkProviders(agentDir: string, command = piCommand()): Readiness[] {
-  return inTempDir((cwd) =>
+export function checkProviders(agentDir: string, command = piCommand()): Promise<Readiness[]> {
+  return withTempDir("shuvuln-auth-", async (cwd) =>
     PROVIDERS.map((provider) => {
       const result = spawnSync(command, ["auth", "check", "--provider", provider, "--json"], {
         cwd,
@@ -46,9 +35,9 @@ export function checkProviders(agentDir: string, command = piCommand()): Readine
 }
 
 /** Opens shuvuln's own Pi so /login can store the z.ai and OpenAI logins in its agent directory. */
-export function openLogin(agentDir: string, command = piCommand()): number | null {
+export function openLogin(agentDir: string, command = piCommand()): Promise<number | null> {
   console.log("Opening shuvuln's own Pi. Run /login, choose z.ai or OpenAI, finish, then /exit.")
-  return inTempDir((cwd) => {
+  return withTempDir("shuvuln-auth-", async (cwd) => {
     const result = spawnSync(command, LOGIN_FLAGS, {
       cwd,
       env: gatewayEnvironment(process.env, agentDir),
@@ -57,5 +46,3 @@ export function openLogin(agentDir: string, command = piCommand()): number | nul
     return result.status
   })
 }
-
-export type { Provider }

@@ -16,6 +16,9 @@ export const ISOLATION_FLAGS = [
   "--no-approve",
 ] as const
 
+/** A Pi model reference without the `:thinking` suffix, which has its own option here. */
+const MODEL_REF = /^[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._-]*$/
+
 export interface GatewayRequest {
   /** Pi model reference written as provider/model. */
   model: string
@@ -28,11 +31,10 @@ export function isThinkingLevel(value: string): value is ThinkingLevel {
 }
 
 export function modelRef(model: string): { provider: string; id: string } {
-  const parts = model.split("/")
-  const [provider = "", id = ""] = parts
-  if (parts.length !== 2 || !provider || !id) {
+  if (!MODEL_REF.test(model)) {
     throw new Error(`Model must be written as provider/model, got "${model}".`)
   }
+  const [provider = "", id = ""] = model.split("/")
   return { provider, id }
 }
 

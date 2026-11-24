@@ -22,10 +22,9 @@ describe("piArgs", () => {
     for (const arg of args) {
       assert.ok(!FORBIDDEN.includes(arg), `${arg} would widen the call`)
     }
-    assert.ok(
-      args
-        .filter((arg) => arg.startsWith("@"))
-        .every((arg) => args.indexOf(arg) > args.indexOf("--system-prompt"))
+    assert.deepEqual(
+      args.filter((arg) => arg.startsWith("@")),
+      ["@/etc/passwd --tools bash"]
     )
   })
 
@@ -42,9 +41,18 @@ describe("piArgs", () => {
     ])
   })
 
-  it("rejects a model that is not provider/model", () => {
+  it("rejects anything that is not a plain provider/model reference", () => {
     assert.deepEqual(modelRef("zai/glm-5.4"), { provider: "zai", id: "glm-5.4" })
-    for (const bad of ["glm-5.4", "zai/glm/5.4", "/glm-5.4", "zai/"]) {
+    for (const bad of [
+      "glm-5.4",
+      "zai/glm/5.4",
+      "/glm-5.4",
+      "zai/",
+      "zai/glm 5.4",
+      "zai/glm:high",
+      "--model",
+      "zai/-x",
+    ]) {
       assert.throws(() => modelRef(bad), Error, bad)
       assert.throws(() => piArgs({ model: bad }), Error, bad)
     }

@@ -45,7 +45,7 @@ describe("PiEventReader", () => {
       { type: "message_end", message: { role: "user", content: "hi" } },
       assistant("stop"),
       { type: "agent_end", messages: [], willRetry: false },
-      { type: "agent_settled" }
+      { type: "agent_settled", aborted: false }
     )
     assert.equal(run.text, "Hello")
     assert.equal(run.stopReason, "stop")
@@ -55,15 +55,17 @@ describe("PiEventReader", () => {
     assert.equal(run.settled, true)
   })
 
-  it("counts a retry that recovered without failing the run", () => {
+  it("keeps a run clean when a retry followed a failed attempt", () => {
     const run = stream(
       HEADER,
       { type: "auto_retry_start", attempt: 1, maxAttempts: 3, delayMs: 2000, errorMessage: "429" },
+      assistant("error", { errorMessage: "429 rate limit" }),
       { type: "auto_retry_end", success: true, attempt: 2 },
       assistant("stop"),
-      { type: "agent_settled" }
+      { type: "agent_settled", aborted: false }
     )
     assert.equal(run.retries, 1)
+    assert.equal(run.text, "Hello")
     assert.equal(run.error, null)
   })
 
@@ -72,8 +74,9 @@ describe("PiEventReader", () => {
       HEADER,
       { type: "auto_retry_end", success: false, attempt: 3, finalError: "429 rate limit" },
       assistant("error", { errorMessage: "no credentials" }),
-      { type: "agent_settled" }
+      { type: "agent_settled", aborted: false }
     )
+    assert.equal(run.retries, 0)
     assert.match(run.error ?? "", /stopped retrying: 429 rate limit/)
     assert.match(run.error ?? "", /reported an error: no credentials/)
     assert.match(run.error ?? "", /stopped with error/)
@@ -84,7 +87,7 @@ describe("PiEventReader", () => {
       HEADER,
       { type: "tool_execution_start", toolCallId: "c1", toolName: "bash", args: { command: "ls" } },
       assistant("stop"),
-      { type: "agent_settled" }
+      { type: "agent_settled", aborted: false }
     )
     assert.equal(run.toolExecutions, 1)
     assert.match(run.error ?? "", /although tools were disabled/)
@@ -105,7 +108,7 @@ describe("PiEventReader", () => {
   })
 
   it("flags a truncated answer", () => {
-    const run = stream(HEADER, assistant("length"), { type: "agent_settled" })
+    const run = stream(HEADER, assistant("length"), { type: "agent_settled", aborted: false })
     assert.match(run.error ?? "", /stopped with length/)
   })
 
@@ -113,9 +116,5 @@ describe("PiEventReader", () => {
     const run = stream(HEADER, assistant("stop"), { type: "agent_settled", aborted: true })
     assert.equal(run.settled, true)
     assert.match(run.error ?? "", /aborted the run/)
-    assert.equal(
-      stream(HEADER, assistant("stop"), { type: "agent_settled", aborted: false }).error,
-      null
-    )
   })
 })

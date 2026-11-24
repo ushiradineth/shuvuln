@@ -25,6 +25,9 @@ Run everything inside `nix develop`, which puts the tools on `PATH` and sets `SH
 - Before any login, `just auth-status` reports `not_ready` for both providers, and `just ping` fails
   with exit status 1 and Pi's own hint.
 - A successful `just ping` is not verified yet. It needs the two logins.
+- `nix flake check` runs 31 unit tests. A stand-in Pi covers the runner's deadline, cancellation,
+  refusal, bad-output and cannot-start paths, and further tests cover the command line's argument
+  handling. No provider is contacted by any test.
 
 ## Structure
 
