@@ -81,6 +81,26 @@ Playbooks pilot they are the likeliest places for a finding that is not a duplic
 - The Mattermost feed at `securityupdates.mattermost.com` is the pairing source for this vendor: fix
   versions, dates and researcher credit per advisory. Other vendors need their own.
 
+## First hunt on current code, 2026-11-26
+
+Stock OpenHack on the Playbooks plugin's server code at `e0717887`, 1.5 MB, 4 workers, 6 steps: 179
+tasks in 1,555 seconds, 828 calls, 13.6M tokens in, 15 findings (5 validated, 9 uncertain, 1
+rejected). `hunt triage` paired one with an advisory on generic words, a false pair. Shu asked for
+high-confidence items only. A reading of the four validated findings against the code kept none:
+
+- The playbook PATCH checks "manage properties", not "edit". The plugin separates the two on
+  purpose, and `AdminOnlyEdit` locks content, not properties. By design.
+- A keyword action can suggest a private playbook's title in a channel. The configurer needs
+  channel-action and playbook-view rights, and the feature exists to suggest playbooks in channels.
+  A title, leaked by an insider.
+- The playbook list has no upper bound on `per_page`. Denial of service, unmeasured, and the brief
+  excludes self-affecting denial of service.
+- Favorites keep names after access to a playbook or run is revoked. Minor information leak.
+
+Lesson: on code that has had years of attention, the stock engine's validated findings were 0 of 4
+worth a report, where on old snapshots 2 of 3 were real. Newer code with fewer eyes is where the
+method pays: the three Mattermost plugins with no known issues, and new programs.
+
 ## Autonomy and human gates
 
 Autonomous, unattended, within budgets:
