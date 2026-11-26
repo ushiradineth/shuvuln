@@ -18,6 +18,8 @@ Run everything inside `nix develop`, which puts the tools on `PATH` and sets `SH
 - Store a token: `just secret-set hexbrain`. List: `just secrets`
 - After a scan: `node src/cli.ts hunt triage <run> --advisories <feed.json>`, inside `nix develop`.
   It labels each finding with the vendor fix that already covers it
+- Target funnel, inside `nix develop`: `node src/cli.ts funnel fetch`, then `funnel rank`,
+  `funnel enrich` and `funnel triage`. `node src/cli.ts program check` validates `programs/`
 - Packages: `nix build .#openhack`, `.#pi`, `.#shuvuln`
 
 ## Verified
@@ -37,6 +39,8 @@ Run everything inside `nix develop`, which puts the tools on `PATH` and sets `SH
   and `openai/gpt-6-sol`. See [docs/PROVIDER-TERMS.md](docs/PROVIDER-TERMS.md).
 - A clean clone of the public repository builds the same three store paths, and its flake check
   passes.
+- `funnel fetch` finds 80 programs with source in scope at the pinned dump, 326 pairs. Tier 2 on the
+  top 40 kept 25 and dropped 15 client SDK wrappers, for 90k z.ai tokens.
 - `hunt triage` on the Playbooks run paired both ignore-endpoint findings with MMSA-2024-00350 and
   raised no false pair among the other 32.
 - On real Mattermost code, stock OpenHack at 4 workers and 4 steps costs about 3.5k tokens per
@@ -60,9 +64,13 @@ Run everything inside `nix develop`, which puts the tools on `PATH` and sets `SH
 - `src/commands/`: the commands behind `src/cli.ts`.
 - `src/triage/known.ts`: pairs a finding with a published vendor fix by the words of its title. The
   title alone: a summary adds enough words to drown the overlap.
+- `src/funnel/`: the target funnel. `dataset.ts` reads the pinned program dump, `score.ts` is tier 1
+  without a model, `triage.ts` is tier 2 with one stage-model call per candidate.
+- `src/program/policy.ts` validates `programs/*.ts`. Run data from the funnel is in
+  `$SHUVULN_HOME/funnel`.
 - Run data lives in `$SHUVULN_HOME` (default `~/.local/share/shuvuln`), never in the repository.
-- `programs/`: one approved engagement policy per program, written from the program's brief. Nothing
-  works on a program before its file names the approver.
+- `programs/`: one approved engagement policy per program as a TypeScript module, written from the
+  program's brief. Nothing works on a program before its file names the approver.
 
 ## Conventions
 
