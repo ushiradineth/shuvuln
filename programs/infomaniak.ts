@@ -2,14 +2,14 @@ import type { ProgramPolicy } from "../src/program/policy.ts"
 
 // Engagement policy for one bug bounty program. Nothing in shuvuln works on a program until this
 // file names who approved it. Drafted on 2026-11-26 from the public YesWeHack program API, which
-// returns the brief, the scopes and the reward grids. Not approved yet: approved_by is empty.
+// returns the brief, the scopes and the reward grids. Approved by Shu on 2026-11-26.
 const infomaniak = {
   program: "infomaniak",
   platform: "yeswehack",
   brief: "https://yeswehack.com/programs/infomaniak-bug-bounty-program",
   brief_last_updated: "2026-11-20",
-  approved_by: "",
-  approved_on: "",
+  approved_by: "shu",
+  approved_on: "2026-11-26",
 
   // v1 proves findings in a local lab only. The brief forbids traffic-heavy automation on live assets.
   live_testing: "unapproved",
