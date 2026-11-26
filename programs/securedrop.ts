@@ -2,14 +2,14 @@ import type { ProgramPolicy } from "../src/program/policy.ts"
 
 // Engagement policy for one bug bounty program. Nothing in shuvuln works on a program until this
 // file names who approved it. Written on 2026-11-26 from the brief Shu pasted after signing in.
-// Not approved yet: approved_by is empty.
+// Approved by Shu on 2026-11-26.
 const securedrop = {
   program: "securedrop",
   platform: "bugcrowd",
   brief: "https://bugcrowd.com/engagements/freedomofpress",
   brief_last_updated: "2026-11-09",
-  approved_by: "",
-  approved_on: "",
+  approved_by: "shu",
+  approved_on: "2026-11-26",
 
   // v1 proves findings in a local lab only. The brief recommends a local instance for testing,
   // but pays nothing for a flaw that depends on a development or virtualised environment.
