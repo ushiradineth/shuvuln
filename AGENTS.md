@@ -28,6 +28,9 @@ Run everything inside `nix develop`, which puts the tools on `PATH` and sets `SH
 - `nix flake check` runs 31 unit tests. A stand-in Pi covers the runner's deadline, cancellation,
   refusal, bad-output and cannot-start paths, and further tests cover the command line's argument
   handling. No provider is contacted by any test.
+- After login, `just ping model=openai/gpt-6-sol` answers `pong` through Sign in with ChatGPT.
+- `zai/glm-5.4` fails with z.ai error 1113 until the Coding Plan key is entered in shuvuln's Pi. See
+  [docs/PROVIDER-TERMS.md](docs/PROVIDER-TERMS.md).
 
 ## Structure
 

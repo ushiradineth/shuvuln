@@ -32,7 +32,12 @@ just ping         # one tiny model call through the gateway
 ```
 
 Before the login, `just auth-status` prints `not_ready` for both providers and `just ping` fails
-with Pi's own hint. That is the expected starting state.
+with Pi's own hint.
+
+If `just ping model=zai/glm-5.4` ends with z.ai error 1113, the key in shuvuln's Pi is not a Coding
+Plan key. Create one in the z.ai console under _Personal Coding Plan → Plan Overview_, then run
+`just auth-login`, `/logout` the z.ai provider and `/login` again. Both providers' terms and how
+shuvuln meets them are in [docs/PROVIDER-TERMS.md](docs/PROVIDER-TERMS.md).
 
 shuvuln's Pi is separate from any other Pi on the machine. It is another binary with its own agent
 directory, `$SHUVULN_HOME/pi-agent` (`~/.local/share/shuvuln/pi-agent` by default), which holds the

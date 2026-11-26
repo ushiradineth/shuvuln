@@ -15,6 +15,8 @@ in
       export PI_TELEMETRY=0
       mkdir -p "$PI_CODING_AGENT_DIR"
       chmod 700 "$PI_CODING_AGENT_DIR"
+      # Provider tokens land in this directory. Keep everything Pi writes here private to the user.
+      umask 077
       exec ${getExe upstream} "$@"
     '';
   }
