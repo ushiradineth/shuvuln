@@ -111,6 +111,7 @@
         export SHUVULN_HOME="''${SHUVULN_HOME:-$HOME/.local/share/shuvuln}"
         export SHUVULN_PI=${self'.packages.pi}/bin/pi
         export SHUVULN_OPENHACK=${self'.packages.openhack-pi}/bin/openhack-pi
+        export NODE_EXTRA_CA_CERTS=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
       '';
     };
   };

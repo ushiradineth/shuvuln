@@ -65,5 +65,5 @@ export function showSecrets(json: boolean): number {
   if (json) console.log(JSON.stringify(status, null, 2))
   else
     for (const item of status) console.log(`${item.name}: ${item.present ? "present" : "missing"}`)
-  return status.every((item) => item.present) ? 0 : 1
+  return 0
 }

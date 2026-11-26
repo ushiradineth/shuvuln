@@ -16,16 +16,17 @@ HackerOne, OpenAI or z.ai account ends the income.
 
 ## Decisions recorded
 
-| #   | Decision                                                                                                              | Note                                                                  |
-| --- | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| 1   | Every model call goes through shuvuln's own Pi: z.ai Coding Plan and OpenAI through a Codex plan                      | Pi is a tool both plans support. See "Model access"                   |
-| 2   | shuvuln's Pi is bundled from llm-agents.nix, with its own agent directory and its own logins                          | The Pi on the system is never used                                    |
-| 3   | Pilot target: Mattermost on Bugcrowd, Playbooks plugin first                                                          | Scope confirmed from public program data today                        |
-| 4   | Spend up to the providers' limits                                                                                     | Cost per proven finding is tracked anyway                             |
-| 5   | Home: `~/Code/shuvuln`, public GitHub repository                                                                      | The repository is created only after Shu's explicit go                |
-| 6   | Nix flake for dependencies, Docker for isolated workloads, NixOS module for the always-on worker                      | See "Isolation"                                                       |
-| 7   | The orchestrator stays in TypeScript. Rust only where a measurement shows a need, behind a JSON command-line boundary | It sits between Pi and OpenHack, where the time goes to waiting       |
-| 8   | Model policy: shuvuln's own stages run on z.ai GLM 5.4. OpenAI is for OpenHack only                                   | Decided by Shu on 2026-11-26. Both are reached through the bundled Pi |
+| #   | Decision                                                                                                              | Note                                                                                                                                                            |
+| --- | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Every model call goes through shuvuln's own Pi: z.ai Coding Plan and OpenAI through a Codex plan                      | Pi is a tool both plans support. See "Model access"                                                                                                             |
+| 2   | shuvuln's Pi is bundled from llm-agents.nix, with its own agent directory and its own logins                          | The Pi on the system is never used                                                                                                                              |
+| 3   | Pilot target: Mattermost on Bugcrowd, Playbooks plugin first                                                          | Scope confirmed from public program data today                                                                                                                  |
+| 4   | Spend up to the providers' limits                                                                                     | Cost per proven finding is tracked anyway                                                                                                                       |
+| 5   | Home: `~/Code/shuvuln`, public GitHub repository                                                                      | The repository is created only after Shu's explicit go                                                                                                          |
+| 6   | Nix flake for dependencies, Docker for isolated workloads, NixOS module for the always-on worker                      | See "Isolation"                                                                                                                                                 |
+| 7   | The orchestrator stays in TypeScript. Rust only where a measurement shows a need, behind a JSON command-line boundary | It sits between Pi and OpenHack, where the time goes to waiting                                                                                                 |
+| 8   | Model policy: shuvuln's own stages run on z.ai GLM 5.4. OpenAI is for OpenHack only                                   | Decided by Shu on 2026-11-26. Both are reached through the bundled Pi                                                                                           |
+| 9   | Program files are TypeScript modules, typed and validated when loaded                                                 | The Nix package runs the source with Node's type stripping and no `node_modules`. A YAML reader would be shuvuln's first runtime dependency. Decided 2026-11-26 |
 
 ## Facts checked on 2026-11-24
 
@@ -324,10 +325,22 @@ own adapter tests. Neither stop has fired.
 
 ### Phase 2: target funnel
 
-1. Dump ingestion at a pinned commit of `bounty-targets-data`.
-2. Tier 1 score with the features above. Tier 2 triage with one cheap call per program-repo pair.
-3. `program.yaml` schema and the approval step. Derive the schema from the existing
-   `programs/mattermost.yaml`, which the Mattermost brief produced.
+1. Done on 2026-11-26. `funnel fetch` downloads the dump at commit `c144723c` and keeps the programs
+   with a source repository in scope: 80 programs, 326 program-repo pairs (Bugcrowd 15, HackerOne
+   55, Intigriti 8, YesWeHack 2).
+2. Done on 2026-11-26. `funnel rank` scores each pair without a model: payout ceiling, platform
+   (HackerOne weighs heavier), component of a larger product, whole organisation in scope, program
+   age, and, once `funnel enrich` has cached the GitHub API's facts, repository size, time since the
+   last change and archived state. `funnel triage` then makes one short z.ai call per candidate,
+   reading the README: keep or drop, with a kind and a reason. On the top 40, 40 calls cost 90k
+   tokens in and 3.8k out; 25 were kept, the 15 dropped were all client SDK wrappers. Without a
+   GitHub token, enrichment stops at the API's 60 requests an hour: 41 of 272 repositories have
+   facts. `just secret-set github` lifts that.
+3. Done on 2026-11-26. Program files are TypeScript modules under `programs/`, typed as
+   `ProgramPolicy` and validated when loaded, by `program check`. The Nix package runs the source
+   through Node's type stripping with no `node_modules`, so a YAML reader would have been shuvuln's
+   first runtime dependency. `requireApprovedProgram` is the gate every later stage calls.
+   `programs/mattermost.ts` holds the Mattermost brief.
 
 Exit: a ranked list Shu has reviewed, with at least 5 approved programs.
 

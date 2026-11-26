@@ -23,6 +23,7 @@
       runtimeInputs = [pkgs.nodejs pi openhack openhack-pi];
       text = ''
         export SHUVULN_PI=${getExe pi}
+        export NODE_EXTRA_CA_CERTS=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
         exec ${getExe pkgs.nodejs} ${self}/src/cli.ts "$@"
       '';
     };

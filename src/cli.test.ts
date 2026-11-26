@@ -40,11 +40,17 @@ describe("secrets", () => {
   })
 
   it("stores a token as a private one-line file and reports presence only", () => {
-    assert.deepEqual(secretStatus(), [{ name: "hexbrain", present: false }])
+    assert.deepEqual(secretStatus(), [
+      { name: "hexbrain", present: false },
+      { name: "github", present: false },
+    ])
     writeSecret("hexbrain", "  abc123 \n")
     assert.equal(readSecret("hexbrain"), "abc123")
     assert.equal(statSync(secretPath("hexbrain")).mode & 0o777, 0o600)
-    assert.deepEqual(secretStatus(), [{ name: "hexbrain", present: true }])
+    assert.deepEqual(secretStatus(), [
+      { name: "hexbrain", present: true },
+      { name: "github", present: false },
+    ])
     assert.ok(!JSON.stringify(secretStatus()).includes("abc123"))
   })
 
@@ -171,6 +177,17 @@ describe("the command line", () => {
       1
     )
     assert.equal(cli(["hunt", "triage", "r1"], { SHUVULN_HOME: home }).status, 2)
+  })
+
+  it("checks the approved program files and refuses to rank without targets", () => {
+    const check = cli(["program", "check"])
+    assert.equal(check.status, 0, check.stderr)
+    assert.match(
+      check.stdout,
+      /mattermost: approved by shu on 2026-11-26; live testing unapproved; 18 targets/
+    )
+    assert.equal(cli(["funnel", "rank"], { SHUVULN_HOME: home }).status, 1)
+    assert.equal(cli(["funnel", "rank", "--limit", "0"], { SHUVULN_HOME: home }).status, 2)
   })
 
   it("stores a secret from piped input and never prints it back", () => {

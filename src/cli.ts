@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 import { checkProviders, openLogin } from "./commands/auth.ts"
 import { ping } from "./commands/gateway.ts"
+import { enrich, fetchTargets, rankTargets, triageTargets } from "./commands/funnel.ts"
 import { scan } from "./commands/hunt.ts"
+import { checkPrograms } from "./commands/program.ts"
 import { triage } from "./commands/triage.ts"
 import { setSecret, showSecrets } from "./commands/secrets.ts"
 import { STAGE_MODEL } from "./models.ts"
@@ -12,7 +14,7 @@ const USAGE = `shuvuln: authorised bug bounty research harness
 Usage:
   shuvuln auth status [--json]        Check that shuvuln's own Pi can reach z.ai and OpenAI
   shuvuln auth login                  Open shuvuln's own Pi to run /login
-  shuvuln secret set <name>           Store a token where only you can read it (known: hexbrain)
+  shuvuln secret set <name>           Store a token where only you can read it (known: hexbrain, github)
   shuvuln secret status [--json]      Say which secrets exist, without printing them
   shuvuln gateway ping [--model <provider/model>] [--json]
                                       Send one tiny prompt through a shuvuln stage model
@@ -20,6 +22,13 @@ Usage:
                                       Run OpenHack on a directory, through shuvuln's own Pi
   shuvuln hunt triage <run> --advisories <feed.json> [--json]
                                       Label a saved scan's findings with fixes the vendor already published
+  shuvuln funnel fetch                 Download the pinned program dump; keep programs with source in scope
+  shuvuln funnel rank [--limit N] [--json]
+                                      Tier 1: score every program-repo pair, no model involved
+  shuvuln funnel enrich [--limit N]    Fetch repository facts from the GitHub API, cached
+  shuvuln funnel triage [--limit N] [--json]
+                                      Tier 2: one short stage-model call per candidate, keep or drop
+  shuvuln program check [--json]       Validate the approved program files under programs/
   shuvuln --help                      Show this text
 `
 
@@ -27,7 +36,7 @@ type Options = { flags: Set<string>; values: Map<string, string> }
 type Arguments = ({ ok: true; words: string[] } & Options) | { ok: false; message: string }
 
 /** Options that take a value, in both the `--name value` and `--name=value` spellings. */
-const VALUED = new Set(["model", "workers", "steps", "advisories"])
+const VALUED = new Set(["model", "workers", "steps", "advisories", "limit"])
 
 function parseArguments(argv: string[]): Arguments {
   const words: string[] = []
@@ -140,6 +149,23 @@ async function main(argv: string[]): Promise<number> {
       return 2
     }
     return triage(argument ?? "", { advisories, json: flags.has("json") })
+  }
+  if (group === "funnel" && command === "fetch" && words.length === 2) return fetchTargets()
+  if (group === "program" && command === "check" && words.length === 2)
+    return checkPrograms(flags.has("json"))
+  if (
+    group === "funnel" &&
+    (command === "rank" || command === "enrich" || command === "triage") &&
+    words.length === 2
+  ) {
+    const limit = positiveInteger(values.get("limit"), command === "rank" ? 25 : 60, "limit")
+    if (typeof limit === "string") {
+      console.error(`${limit}\n\n${USAGE}`)
+      return 2
+    }
+    if (command === "rank") return rankTargets({ limit, json: flags.has("json") })
+    if (command === "enrich") return enrich({ limit })
+    return triageTargets({ limit, json: flags.has("json") })
   }
   console.error(`unknown command ${words.join(" ")}\n\n${USAGE}`)
   return 2

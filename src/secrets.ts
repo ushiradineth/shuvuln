@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { shuvulnHome } from "./paths.ts"
 
-export const SECRET_NAMES = ["hexbrain"] as const
+export const SECRET_NAMES = ["hexbrain", "github"] as const
 export type SecretName = (typeof SECRET_NAMES)[number]
 
 /** Secrets live outside the repository, in files only the user can read. */
