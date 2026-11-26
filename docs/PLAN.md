@@ -365,10 +365,11 @@ own adapter tests. Neither stop has fired.
    first runtime dependency. `requireApprovedProgram` is the gate every later stage calls.
    `programs/mattermost.ts` holds the Mattermost brief.
 
-Status on 2026-11-26: Shu reviewed the ranked list and approved Infomaniak and Mattermost. The
-SecureDrop and Auth0 briefs are read and their program files drafted, unsigned. Two rules from them
-bind the harness: Auth0 rejects any report with AI-generated content, so shuvuln finds and proves
-and Shu writes every report; and Auth0 bans automated tools on its systems outright.
+Status on 2026-11-26: Shu reviewed the ranked list and approved four programs, Mattermost,
+Infomaniak, SecureDrop and Auth0. That is every paying program with source in scope that fits the
+method; the fifth, Electroneum, is blockchain code and was set aside. Two rules from the briefs bind
+the harness: Auth0 rejects any report with AI-generated content, so shuvuln finds and proves and Shu
+writes every report; and Auth0 bans automated tools on its systems outright.
 
 Exit: a ranked list Shu has reviewed, with at least 5 approved programs.
 
