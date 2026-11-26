@@ -60,6 +60,7 @@ credentials.
 | `just smoke`               | OpenHack on the smoke fixture, on OpenAI. Costs plan usage  |
 | `just secret-set hexbrain` | Store the HexBrain token in `$SHUVULN_HOME/secrets`         |
 | `just secrets`             | Say which secrets exist, without printing them              |
+| `hunt triage`              | Label a saved scan's findings with fixes already published  |
 
 ## Layout
 

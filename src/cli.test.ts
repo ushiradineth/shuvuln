@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import { spawnSync } from "node:child_process"
-import { mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs"
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { fileURLToPath } from "node:url"
@@ -113,6 +113,64 @@ describe("the command line", () => {
     const run = cli(["hunt", "scan", ".", "--workers", "1", "--steps=2"], { SHUVULN_HOME: home })
     assert.equal(run.status, 1)
     assert.match(run.stderr, /OpenHack could not start/)
+  })
+
+  it("labels a saved scan's findings with fixes the vendor already published", () => {
+    const runs = join(home, "runs")
+    mkdirSync(runs, { recursive: true })
+    writeFileSync(
+      join(runs, "r1.json"),
+      JSON.stringify({
+        id: "r1",
+        findings: [
+          {
+            id: "a",
+            severity: "high",
+            validation: "validated",
+            title: "Users delete arbitrary posts through the ignore endpoint",
+            file: "signal.go",
+            line: 95,
+          },
+          {
+            id: "b",
+            severity: "low",
+            validation: "uncertain",
+            title: "Prometheus metrics endpoint is exposed",
+            file: "metrics.go",
+            line: 26,
+          },
+        ],
+      })
+    )
+    const feed = join(home, "feed.json")
+    writeFileSync(
+      feed,
+      JSON.stringify([
+        {
+          issue_id: "MMSA-2024-00350",
+          details:
+            "Fixed an issue where a user could delete an arbitrary post via the Playbooks /ignore-thread endpoint.",
+          fix_release_date: "2024-09-26",
+        },
+      ])
+    )
+    const run = cli(["hunt", "triage", "r1", "--advisories", feed], { SHUVULN_HOME: home })
+    assert.equal(run.status, 0)
+    assert.match(run.stdout, /findings: 2, 1 already fixed/)
+    assert.match(run.stdout, /known: MMSA-2024-00350 2024-09-26 \(overlap (0\.[5-9]|1)\)/)
+    assert.match(run.stdout, /known: none/)
+    const json = JSON.parse(
+      cli(["hunt", "triage", "r1", "--advisories", feed, "--json"], { SHUVULN_HOME: home }).stdout
+    )
+    assert.deepEqual(
+      json.findings.map((f: { known: { id: string } | null }) => f.known?.id ?? null),
+      ["MMSA-2024-00350", null]
+    )
+    assert.equal(
+      cli(["hunt", "triage", "nope", "--advisories", feed], { SHUVULN_HOME: home }).status,
+      1
+    )
+    assert.equal(cli(["hunt", "triage", "r1"], { SHUVULN_HOME: home }).status, 2)
   })
 
   it("stores a secret from piped input and never prints it back", () => {

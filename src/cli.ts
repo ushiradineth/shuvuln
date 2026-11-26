@@ -2,6 +2,7 @@
 import { checkProviders, openLogin } from "./commands/auth.ts"
 import { ping } from "./commands/gateway.ts"
 import { scan } from "./commands/hunt.ts"
+import { triage } from "./commands/triage.ts"
 import { setSecret, showSecrets } from "./commands/secrets.ts"
 import { STAGE_MODEL } from "./models.ts"
 import { piAgentDir } from "./paths.ts"
@@ -17,6 +18,8 @@ Usage:
                                       Send one tiny prompt through a shuvuln stage model
   shuvuln hunt scan <directory> [--model <provider/model>] [--workers N] [--steps N] [--json]
                                       Run OpenHack on a directory, through shuvuln's own Pi
+  shuvuln hunt triage <run> --advisories <feed.json> [--json]
+                                      Label a saved scan's findings with fixes the vendor already published
   shuvuln --help                      Show this text
 `
 
@@ -24,7 +27,7 @@ type Options = { flags: Set<string>; values: Map<string, string> }
 type Arguments = ({ ok: true; words: string[] } & Options) | { ok: false; message: string }
 
 /** Options that take a value, in both the `--name value` and `--name=value` spellings. */
-const VALUED = new Set(["model", "workers", "steps"])
+const VALUED = new Set(["model", "workers", "steps", "advisories"])
 
 function parseArguments(argv: string[]): Arguments {
   const words: string[] = []
@@ -129,6 +132,14 @@ async function main(argv: string[]): Promise<number> {
       steps,
       json: flags.has("json"),
     })
+  }
+  if (group === "hunt" && command === "triage" && words.length === 3) {
+    const advisories = values.get("advisories")
+    if (advisories === undefined) {
+      console.error(`--advisories needs a value\n\n${USAGE}`)
+      return 2
+    }
+    return triage(argument ?? "", { advisories, json: flags.has("json") })
   }
   console.error(`unknown command ${words.join(" ")}\n\n${USAGE}`)
   return 2

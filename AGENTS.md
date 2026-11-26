@@ -16,6 +16,8 @@ Run everything inside `nix develop`, which puts the tools on `PATH` and sets `SH
 - Gateway smoke test: `just ping`, or `just ping model=<provider/model>`
 - Discovery engine smoke test: `just smoke` (OpenHack on `fixtures/notes-app`, costs plan usage)
 - Store a token: `just secret-set hexbrain`. List: `just secrets`
+- After a scan: `node src/cli.ts hunt triage <run> --advisories <feed.json>`, inside `nix develop`.
+  It labels each finding with the vendor fix that already covers it
 - Packages: `nix build .#openhack`, `.#pi`, `.#shuvuln`
 
 ## Verified
@@ -35,6 +37,8 @@ Run everything inside `nix develop`, which puts the tools on `PATH` and sets `SH
   and `openai/gpt-6-sol`. See [docs/PROVIDER-TERMS.md](docs/PROVIDER-TERMS.md).
 - A clean clone of the public repository builds the same three store paths, and its flake check
   passes.
+- `hunt triage` on the Playbooks run paired both ignore-endpoint findings with MMSA-2024-00350 and
+  raised no false pair among the other 32.
 - On real Mattermost code, stock OpenHack at 4 workers and 4 steps costs about 3.5k tokens per
   kilobyte of scope. It found a known reflected XSS when the scan root held source and sink, and
   missed a known permission bug in a whole API layer. Numbers are in `docs/PLAN.md`.
@@ -54,6 +58,8 @@ Run everything inside `nix develop`, which puts the tools on `PATH` and sets `SH
   MIT commit plus `patches/openhack-pi-provider.patch`, so it reaches models only through Pi.
 - `src/models.ts` is the model policy. `src/secrets.ts` stores tokens under `$SHUVULN_HOME/secrets`.
 - `src/commands/`: the commands behind `src/cli.ts`.
+- `src/triage/known.ts`: pairs a finding with a published vendor fix by the words of its title. The
+  title alone: a summary adds enough words to drown the overlap.
 - Run data lives in `$SHUVULN_HOME` (default `~/.local/share/shuvuln`), never in the repository.
 - `programs/`: one approved engagement policy per program, written from the program's brief. Nothing
   works on a program before its file names the approver.
