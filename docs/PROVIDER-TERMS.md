@@ -30,10 +30,10 @@ Two rules follow from this table and belong to the code, not only to this page:
 
 ## z.ai: GLM Coding Plan usage policy
 
-| Rule in the policy                                                | What shuvuln does                                                                                                        |
-| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Use only inside officially supported tools                        | Pi is on the supported list and makes every call                                                                         |
-| Subscription benefits exclusive to the subscriber                 | One subscriber, one account. No sharing                                                                                  |
-| Violations can bring rate limits, a freeze or a ban               | Same account-risk acceptance as above. Stop at the first risk notice                                                     |
-| A specific endpoint and a short model list                        | Pi's built-in z.ai provider uses the Coding Plan endpoint. The plan's models are the only ones requested                 |
-| Error 1113 after purchase means the plan's conditions are not met | Seen on 2026-11-24 with the key stored in shuvuln's Pi. The key must be created under the plan, not as a general API key |
+| Rule in the policy                                                | What shuvuln does                                                                                                                       |
+| ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Use only inside officially supported tools                        | Pi is on the supported list and makes every call                                                                                        |
+| Subscription benefits exclusive to the subscriber                 | One subscriber, one account. No sharing                                                                                                 |
+| Violations can bring rate limits, a freeze or a ban               | Same account-risk acceptance as above. Stop at the first risk notice                                                                    |
+| A specific endpoint and a short model list                        | Pi's built-in z.ai provider uses the Coding Plan endpoint. The plan's models are the only ones requested                                |
+| Error 1113 after purchase means the plan's conditions are not met | Seen on 2026-11-24 with a key that was not a plan key. A key created under the plan answered on the first try. The README keeps the fix |

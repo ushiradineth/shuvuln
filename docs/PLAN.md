@@ -1,9 +1,7 @@
 # shuvuln: plan
 
-Status: plan, revision 3, 2026-11-24. Phase 0 is complete except for the z.ai key (step 5). No
-target code has been run and no program asset has been contacted. `~/bounty-harness/`. Nothing is
-installed or built, no GitHub repository exists, no target code has been run, and no program asset
-has been contacted.
+Status: plan, revision 3, 2026-11-24. Phase 0 is complete. Phase 1 is next. No target code has been
+run and no program asset has been contacted.
 
 ## Goal
 
@@ -206,8 +204,8 @@ Rules: stay inside plan limits, never rotate accounts, stop at the first risk no
 Verified on 2026-11-24: the bundled Pi starts with its own agent directory, both providers report
 `not_ready` before login, and a gateway call before login fails with Pi's own hint and a non-zero
 exit. After login, `openai/gpt-6-sol` answers `pong` through Sign in with ChatGPT (451 tokens in, 5
-out, no retry). `zai/glm-5.4` is refused with z.ai error 1113 until a Coding Plan key replaces the
-key now stored in shuvuln's Pi.
+out, no retry). After the z.ai key was replaced with one created under the plan, `zai/glm-5.4` and
+`zai/glm-5.3-flash` answer too.
 
 ## Phases
 
@@ -227,15 +225,17 @@ Done on 2026-11-24, aarch64-darwin:
 4. Before login: `just auth-status` reports both providers `not_ready`. `just ping` fails with Pi's
    own hint and exit status 1.
 
-Remaining:
+Closed on 2026-11-24:
 
-5. Shu logged in on 2026-11-24. `just ping model=openai/gpt-6-sol` answers `pong` through Sign in
-   with ChatGPT. `zai/glm-5.4` fails with z.ai error 1113: the key in shuvuln's Pi is not attached
-   to the Coding Plan. A plan key created under _Personal Coding Plan → Plan Overview_ fixes it.
-6. Public GitHub repository, created on Shu's instruction after the terms were checked against the
-   design in [PROVIDER-TERMS.md](PROVIDER-TERMS.md).
+5. Shu logged in. `just ping` answers `pong` on `openai/gpt-6-sol` (Sign in with ChatGPT) and, after
+   the key was replaced with one created under the plan, on `zai/glm-5.4` and `zai/glm-5.3-flash`.
+6. Public repository at https://github.com/ushiradineth/shuvuln, created on Shu's instruction after
+   both providers' terms were checked against the design in [PROVIDER-TERMS.md](PROVIDER-TERMS.md).
+7. Exit check met: a clean clone of the public repository builds the same three store paths as the
+   local tree, and its flake check passes.
 
 Exit: a clean clone builds the same environment twice, and `just ping` succeeds on both providers.
+Met on 2026-11-24.
 
 ### Phase 1: OpenHack through Pi, baseline and answer key
 
@@ -321,8 +321,6 @@ Exit: a dry run over the answer-key cases produces drafts Shu rates submittable 
 
 ## Not verified
 
-- A successful model call on z.ai through the bundled Pi. Blocked on the Coding Plan key (Phase 0,
-  step 5).
 - The `openhack` package on Linux. The archive hash is verified. The ELF patching is untested.
 - Mattermost reward tiers and the local-install clause on the Bugcrowd brief.
 - That the Playbooks plugin builds and runs at the historical refs.

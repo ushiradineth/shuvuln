@@ -29,8 +29,10 @@ Run everything inside `nix develop`, which puts the tools on `PATH` and sets `SH
   refusal, bad-output and cannot-start paths, and further tests cover the command line's argument
   handling. No provider is contacted by any test.
 - After login, `just ping model=openai/gpt-6-sol` answers `pong` through Sign in with ChatGPT.
-- `zai/glm-5.4` fails with z.ai error 1113 until the Coding Plan key is entered in shuvuln's Pi. See
-  [docs/PROVIDER-TERMS.md](docs/PROVIDER-TERMS.md).
+- After the z.ai key was replaced, `just ping` answers `pong` on `zai/glm-5.4`, `zai/glm-5.3-flash`
+  and `openai/gpt-6-sol`. See [docs/PROVIDER-TERMS.md](docs/PROVIDER-TERMS.md).
+- A clean clone of the public repository builds the same three store paths, and its flake check
+  passes.
 
 ## Structure
 
