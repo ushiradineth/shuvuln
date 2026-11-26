@@ -296,18 +296,26 @@ Met on 2026-11-24.
 3. Partly done on 2026-11-26, by directory scope, since OpenHack has no path filter. Stock OpenHack
    through the bundled Pi, `openai/gpt-6-sol`, 4 workers, 4 steps:
 
-   | Case, vulnerable tag                       | Scope                     | Found                     | Calls | Tokens in | Seconds |
-   | ------------------------------------------ | ------------------------- | ------------------------- | ----- | --------- | ------- |
-   | OAuth reflected XSS, v5.35.2               | `web/`, 157 KB            | no, sink outside the root | 21    | 330k      | 82      |
-   | OAuth reflected XSS, v5.35.2               | `web/` + `utils/`, 199 KB | yes, twice                | 57    | 756k      | 153     |
-   | Slash command in read-only channel, v7.8.4 | `api4/`, 812 KB           | no, 12 other findings     | 223   | 2,832k    | 465     |
+   | Case, vulnerable tag                             | Scope                     | Found                         | Calls | Tokens in | Seconds |
+   | ------------------------------------------------ | ------------------------- | ----------------------------- | ----- | --------- | ------- |
+   | OAuth reflected XSS, v5.35.2                     | `web/`, 157 KB            | no, sink outside the root     | 21    | 330k      | 82      |
+   | OAuth reflected XSS, v5.35.2                     | `web/` + `utils/`, 199 KB | yes, twice                    | 57    | 756k      | 153     |
+   | Slash command in read-only channel, v7.8.4       | `api4/`, 812 KB           | no, 12 other findings         | 223   | 2,832k    | 465     |
+   | Control: the same XSS, fixed tag v5.35.3         | `web/` + `utils/`, 199 KB | not reported, as it should be | 93    | 1,033k    | 255     |
+   | Playbooks unbounded request size, plugin v1.29.1 | plugin `server/`, 936 KB  | no, 34 other findings         | 767   | 11,463k   | 1,516   |
 
-   Cost is close to 3.5k tokens in per kilobyte of scope. The first row is the lesson for Phase 3:
-   the source sat in `web/oauth.go` and the sink in `utils/api.go`, and a scan root that cuts the
-   flow loses the bug. The third row is a permission-logic bug, which the engine did not see in a
-   whole layer. The other two patch-level cases are unmeasured: one is fixed in `model/` and the
-   store, and the Playbooks plugin case is pinned to v1.29.1 and v1.29.2 but not scanned. A scan of
-   a whole first-party tree is unmeasured too. The fixed tags were not scanned either.
+   In the Playbooks scan, two validated findings were real bugs that Mattermost fixed years later:
+   deleting arbitrary posts through the ignore endpoints (MMSA-2024-00350, fixed in 2024) and
+   updating a channel action without checking it belongs to that channel (fixed in June 2026, with
+   no advisory). The engine therefore finds access-control bugs in plugin code, and missed the two
+   "missing limit" cases and one permission-logic case. Of its 34 Playbooks findings, 4 were
+   validated, 27 uncertain and 2 rejected. Cost is close to 3.5k tokens in per kilobyte of scope,
+   and 12k when many candidates reach the council. The second row is the lesson for Phase 3: the
+   source sat in `web/oauth.go` and the sink in `utils/api.go`, and a scan root that cuts the flow
+   loses the bug. The third row is a permission-logic bug, which the engine did not see in a whole
+   layer. The third patch-level case, the automatic response size limit fixed in `model/` and the
+   store, is unmeasured: its natural scope is over 2 MB. A scan of a whole first-party tree is
+   unmeasured too. The fixed tags of the two missed cases were not scanned.
 
 Exit: a recall and cost table for the stock tool, produced through the bundled Pi.
 
