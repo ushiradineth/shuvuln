@@ -101,6 +101,31 @@ Lesson: on code that has had years of attention, the stock engine's validated fi
 worth a report, where on old snapshots 2 of 3 were real. Newer code with fewer eyes is where the
 method pays: the three Mattermost plugins with no known issues, and new programs.
 
+## Hunts on the three newest Mattermost plugins, 2026-11-26
+
+Stock OpenHack on each plugin's `server/` at master, 4 workers, 6 steps:
+
+| Plugin         | Bytes  | State                 | Calls | Tokens in | Findings                                                     |
+| -------------- | ------ | --------------------- | ----- | --------- | ------------------------------------------------------------ |
+| metrics        | 393 KB | partial, 0 candidates | 12    | 206k      | 0                                                            |
+| channel-export | 56 KB  | complete              | 22    | 243k      | 1 validated, CSV formula injection, which the brief excludes |
+| teams-meetings | 47 KB  | complete              | 31    | 365k      | 1 validated, 2 uncertain                                     |
+
+The server directories are far smaller than the repositories, so the three cost 810k tokens in all,
+not 30M. Reading the code kept two findings in the teams-meetings plugin, both absent from its 15
+public issues and from the advisory feed:
+
+- A member can plant `meeting_link` in a post's properties; within 30 seconds the plugin shows it,
+  as the bot, with a "join" button and a chosen creator name to whoever starts a meeting. The check
+  never looks at who wrote the post, and Mattermost keeps properties set through the API.
+  Reproducible locally, since the path runs before any Microsoft sign-in.
+- The OAuth state is a predictable string with no nonce. The callback's checks, equality with the
+  stored value and a logged-in user, are what CSRF defeats, so a victim who clicks a crafted link
+  gets the attacker's Microsoft account linked. Needs an abandoned connect, a known channel ID and a
+  click.
+
+Neither is proven. Both need the Phase 4 lab before anything is reported.
+
 ## Autonomy and human gates
 
 Autonomous, unattended, within budgets:
