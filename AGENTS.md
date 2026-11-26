@@ -35,6 +35,9 @@ Run everything inside `nix develop`, which puts the tools on `PATH` and sets `SH
   and `openai/gpt-6-sol`. See [docs/PROVIDER-TERMS.md](docs/PROVIDER-TERMS.md).
 - A clean clone of the public repository builds the same three store paths, and its flake check
   passes.
+- On real Mattermost code, stock OpenHack at 4 workers and 4 steps costs about 3.5k tokens per
+  kilobyte of scope. It found a known reflected XSS when the scan root held source and sink, and
+  missed a known permission bug in a whole API layer. Numbers are in `docs/PLAN.md`.
 - OpenHack runs through the bundled Pi. On the 60-line fixture, with 2 workers and 4 steps: 19 tasks
   complete in 206 seconds, 37 calls, 134k tokens in and 14k out, both planted mistakes validated by
   the full council. OpenHack's own gate passes on the patched tree: 154 tests.

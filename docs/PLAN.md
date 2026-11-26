@@ -67,6 +67,19 @@ brief was last updated on 2026-11-20.
 Implication for the funnel: the three newest in-scope plugins have no known issues yet. After the
 Playbooks pilot they are the likeliest places for a finding that is not a duplicate.
 
+## Phase 1 measurements, 2026-11-26
+
+- A scan root must hold the whole flow. OpenHack follows calls with its own tools, but only inside
+  the directory it was given. Phase 3's scopes therefore come from call graphs, not from repository
+  layout.
+- The stock engine costs about 3.5k tokens in per kilobyte of scope at 4 workers and 4 steps. A
+  whole first-party server tree is tens of megabytes, so it is out of reach as one scan.
+- Two access-logic cases are the hard class so far: one XSS was found, one permission bug was not.
+- On z.ai, the gateway's default thinking level did not finish in four minutes on a 15 KB file,
+  while `low` answered in two seconds. Every z.ai stage sets its thinking level on purpose.
+- The Mattermost feed at `securityupdates.mattermost.com` is the pairing source for this vendor: fix
+  versions, dates and researcher credit per advisory. Other vendors need their own.
+
 ## Autonomy and human gates
 
 Autonomous, unattended, within budgets:
@@ -271,16 +284,35 @@ Met on 2026-11-24.
    out. Both planted mistakes were validated by the full council. 7 further candidates were held
    back as uncertain. Before the fix, 8 of 18 tasks failed on glued or truncated replies.
 
-2. Answer key for Mattermost: its 19 disclosed HackerOne reports from HexBrain, each paired with the
-   pre-fix and post-fix refs. The advisory list on `docs.mattermost.com` did not parse, so the
-   pairing method is settled here.
-3. Stock OpenHack on the pre-fix snapshots, with a `.openhackignore` for `build/` and
-   `node_modules`. Record found or not, tokens and wall time per case.
+2. Done on 2026-11-26 for the source-available reports. 19 disclosed HackerOne reports came from
+   HexBrain's open endpoints, and 762 Mattermost advisories from the feed the vendor's own
+   security-updates page renders, `securityupdates.mattermost.com/security_updates.json`. Each
+   advisory names the fix versions and credits the researcher, so 11 reports pair to an advisory by
+   credit or by description: 3 at adjacent patch releases, where the diff is the fix, and 8 at the
+   previous minor release. 8 reports do not pair: customer-portal and cloud-configuration issues,
+   one closed as not applicable, and three without a credited advisory. The key lives in
+   `$SHUVULN_HOME/answer-key/mattermost/cases.json`, private because report text belongs to its
+   authors. No pair is proven by a differential proof yet.
+3. Partly done on 2026-11-26, by directory scope, since OpenHack has no path filter. Stock OpenHack
+   through the bundled Pi, `openai/gpt-6-sol`, 4 workers, 4 steps:
+
+   | Case, vulnerable tag                       | Scope                     | Found                     | Calls | Tokens in | Seconds |
+   | ------------------------------------------ | ------------------------- | ------------------------- | ----- | --------- | ------- |
+   | OAuth reflected XSS, v5.35.2               | `web/`, 157 KB            | no, sink outside the root | 21    | 330k      | 82      |
+   | OAuth reflected XSS, v5.35.2               | `web/` + `utils/`, 199 KB | yes, twice                | 57    | 756k      | 153     |
+   | Slash command in read-only channel, v7.8.4 | `api4/`, 812 KB           | no, 12 other findings     | 223   | 2,832k    | 465     |
+
+   Cost is close to 3.5k tokens in per kilobyte of scope. The first row is the lesson for Phase 3:
+   the source sat in `web/oauth.go` and the sink in `utils/api.go`, and a scan root that cuts the
+   flow loses the bug. The third row is a permission-logic bug, which the engine did not see in a
+   whole layer. The other two patch-level cases are unmeasured: one is fixed in `model/` and the
+   store, and the Playbooks plugin case is pinned to v1.29.1 and v1.29.2 but not scanned. A scan of
+   a whole first-party tree is unmeasured too. The fixed tags were not scanned either.
 
 Exit: a recall and cost table for the stock tool, produced through the bundled Pi.
 
 Stop: fewer than 5 cases build from source at both refs, or the `pi` provider cannot pass OpenHack's
-own adapter tests.
+own adapter tests. Neither stop has fired.
 
 ### Phase 2: target funnel
 
