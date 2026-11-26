@@ -179,13 +179,48 @@ describe("the command line", () => {
     assert.equal(cli(["hunt", "triage", "r1"], { SHUVULN_HOME: home }).status, 2)
   })
 
-  it("checks the approved program files and refuses to rank without targets", () => {
-    const check = cli(["program", "check"])
-    assert.equal(check.status, 0, check.stderr)
-    assert.match(
-      check.stdout,
-      /mattermost: approved by shu on 2026-11-26; live testing unapproved; 18 targets/
-    )
+  it("checks program files, valid or not, and refuses to rank without targets", () => {
+    const programs = mkdtempSync(join(tmpdir(), "shuvuln-programs-"))
+    const policy = {
+      program: "acme",
+      platform: "bugcrowd",
+      brief: "https://bugcrowd.com/engagements/acme",
+      brief_last_updated: "2026-11-01",
+      approved_by: "shu",
+      approved_on: "2026-11-02",
+      live_testing: "unapproved",
+      local_installation: "allowed",
+      safe_harbor: "full",
+      identity_verification_required: false,
+      disclosure: "coordinated",
+      rating: "VRT",
+      rewards_usd: { P1: 1000 },
+      accounts: { email_domain: "example.com", signup: "https://example.com", roles: ["Member"] },
+      targets: [{ name: "acme-plugin" }],
+      out_of_scope: [],
+      ineligible: [],
+      known_issues: [],
+      ai_policy: "not addressed",
+      submission_stop: { after_consecutive_not_applicable_or_informative: 3 },
+    }
+    try {
+      writeFileSync(join(programs, "acme.ts"), `export default ${JSON.stringify(policy)}`)
+      const check = cli(["program", "check", programs])
+      assert.equal(check.status, 0, check.stderr)
+      assert.match(
+        check.stdout,
+        /acme: approved by shu on 2026-11-02; live testing unapproved; 1 targets/
+      )
+      writeFileSync(
+        join(programs, "draft.ts"),
+        `export default ${JSON.stringify({ ...policy, program: "draft", approved_by: "" })}`
+      )
+      const draft = cli(["program", "check", programs])
+      assert.equal(draft.status, 1)
+      assert.match(draft.stdout, /draft: invalid\n  - approved_by must be non-empty text/)
+    } finally {
+      rmSync(programs, { recursive: true, force: true })
+    }
     assert.equal(cli(["funnel", "rank"], { SHUVULN_HOME: home }).status, 1)
     assert.equal(cli(["funnel", "rank", "--limit", "0"], { SHUVULN_HOME: home }).status, 2)
   })

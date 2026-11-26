@@ -1,8 +1,8 @@
 import { loadPrograms } from "../program/policy.ts"
 
 /** Lists every program file and whether it is valid and approved. Exit 1 when one is not. */
-export async function checkPrograms(json: boolean): Promise<number> {
-  const loaded = await loadPrograms("programs")
+export async function checkPrograms(directory: string, json: boolean): Promise<number> {
+  const loaded = await loadPrograms(directory)
   if (json) {
     console.log(
       JSON.stringify(
@@ -23,7 +23,7 @@ export async function checkPrograms(json: boolean): Promise<number> {
       )
     )
   } else if (loaded.length === 0) {
-    console.log("no program files under programs/")
+    console.log(`no program files under ${directory}`)
   } else {
     for (const entry of loaded) {
       if (!entry.ok) {

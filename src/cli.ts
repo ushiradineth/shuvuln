@@ -28,7 +28,7 @@ Usage:
   shuvuln funnel enrich [--limit N]    Fetch repository facts from the GitHub API, cached
   shuvuln funnel triage [--limit N] [--json]
                                       Tier 2: one short stage-model call per candidate, keep or drop
-  shuvuln program check [--json]       Validate the approved program files under programs/
+  shuvuln program check [dir] [--json] Validate approved program files, programs/ by default
   shuvuln --help                      Show this text
 `
 
@@ -151,8 +151,8 @@ async function main(argv: string[]): Promise<number> {
     return triage(argument ?? "", { advisories, json: flags.has("json") })
   }
   if (group === "funnel" && command === "fetch" && words.length === 2) return fetchTargets()
-  if (group === "program" && command === "check" && words.length === 2)
-    return checkPrograms(flags.has("json"))
+  if (group === "program" && command === "check" && words.length <= 3)
+    return checkPrograms(argument ?? "programs", flags.has("json"))
   if (
     group === "funnel" &&
     (command === "rank" || command === "enrich" || command === "triage") &&

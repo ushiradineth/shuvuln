@@ -332,10 +332,13 @@ own adapter tests. Neither stop has fired.
    (HackerOne weighs heavier), component of a larger product, whole organisation in scope, program
    age, and, once `funnel enrich` has cached the GitHub API's facts, repository size, time since the
    last change and archived state. `funnel triage` then makes one short z.ai call per candidate,
-   reading the README: keep or drop, with a kind and a reason. On the top 40, 40 calls cost 90k
-   tokens in and 3.8k out; 25 were kept, the 15 dropped were all client SDK wrappers. Without a
-   GitHub token, enrichment stops at the API's 60 requests an hour: 41 of 272 repositories have
-   facts. `just secret-set github` lifts that.
+   reading the README: keep or drop, with a kind and a reason. The question also names the languages
+   the review reads well, so memory-safety and smart-contract repositories are dropped. With a
+   GitHub token (`just secret-set github`) all 272 repositories have facts. All 272 were triaged for
+   about 500k z.ai tokens: 116 kept, 22 of them in 5 paying programs: Auth0, Mattermost, Infomaniak,
+   Electroneum and SecureDrop. The other 94 kept repositories belong to unpaid disclosure programs.
+   Verdicts carry a version, so a changed question re-triages.
+
 3. Done on 2026-11-26. Program files are TypeScript modules under `programs/`, typed as
    `ProgramPolicy` and validated when loaded, by `program check`. The Nix package runs the source
    through Node's type stripping with no `node_modules`, so a YAML reader would have been shuvuln's
