@@ -46,6 +46,27 @@ HackerOne, OpenAI or z.ai account ends the income.
 | This machine and hosts                                      | Mac: 16 GB RAM, 10 CPUs, Docker limited to about 10 GB. three NixOS hosts, named in the private `nix-config`.                                                                                                                                                                                                                                                           | Research stages run on the Mac. Labs and the steady-state worker belong on a Linux host if one has the memory and disk.                                                                                                     |
 | OpenAI Sign in with ChatGPT Terms                           | Shu supplied the text on 2026-11-24. The Usage Policies are still unread.                                                                                                                                                                                                                                                                                               | Mapped in [PROVIDER-TERMS.md](PROVIDER-TERMS.md). Two rules follow: no unattended run without a recorded consent, and the gateway is never an endpoint for other tools. OpenAI may suspend access it judges a security risk |
 
+## Mattermost brief, read by Shu on 2026-11-26
+
+Recorded as the approved policy in [../programs/mattermost.yaml](../programs/mattermost.yaml). The
+brief was last updated on 2026-11-20.
+
+- Pays P1 $2,000, P2 $750, P3 $300, P4 $150. Average payout over the last three months is $310. 75%
+  of submissions are decided within 10 days. Three acceptances in the week before reading.
+- Local installation is explicitly allowed, from source or download. A researcher-owned Cloud
+  instance is also in scope.
+- Known issues per target, closed as not applicable: Cloud 77, Agents 10, Playbooks 6, Boards 6,
+  Jira, GitHub and GitLab 4 each, Zoom and Confluence 3, Calls 2, Calendar 1, Metrics, Channel
+  Export and Teams Meetings 0.
+- Ineligible unless more is shown: SSRF needing system admin (except on Cloud), self-XSS with more
+  than two steps, open redirect without further impact, anything a configuration option mitigates,
+  default elevated permissions a setting can restrict, and unconfirmed scanner output.
+- The brief does not address automation limits or AI. Bugcrowd's platform rules apply.
+- Identity verification is required before submitting.
+
+Implication for the funnel: the three newest in-scope plugins have no known issues yet. After the
+Playbooks pilot they are the likeliest places for a finding that is not a duplicate.
+
 ## Autonomy and human gates
 
 Autonomous, unattended, within budgets:
@@ -265,7 +286,8 @@ own adapter tests.
 
 1. Dump ingestion at a pinned commit of `bounty-targets-data`.
 2. Tier 1 score with the features above. Tier 2 triage with one cheap call per program-repo pair.
-3. `program.yaml` schema and the approval step.
+3. `program.yaml` schema and the approval step. Derive the schema from the existing
+   `programs/mattermost.yaml`, which the Mattermost brief produced.
 
 Exit: a ranked list Shu has reviewed, with at least 5 approved programs.
 
@@ -329,7 +351,6 @@ Exit: a dry run over the answer-key cases produces drafts Shu rates submittable 
 ## Not verified
 
 - The `openhack` package on Linux. The archive hash is verified. The ELF patching is untested.
-- Mattermost reward tiers and the local-install clause on the Bugcrowd brief.
 - That the Playbooks plugin builds and runs at the historical refs.
 - Specs of the three NixOS hosts.
 - Whether the Codex plan's limits suit hours of unattended scanning. Measured from Phase 1 on.

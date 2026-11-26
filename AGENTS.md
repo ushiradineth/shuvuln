@@ -52,6 +52,8 @@ Run everything inside `nix develop`, which puts the tools on `PATH` and sets `SH
 - `src/models.ts` is the model policy. `src/secrets.ts` stores tokens under `$SHUVULN_HOME/secrets`.
 - `src/commands/`: the commands behind `src/cli.ts`.
 - Run data lives in `$SHUVULN_HOME` (default `~/.local/share/shuvuln`), never in the repository.
+- `programs/`: one approved engagement policy per program, written from the program's brief. Nothing
+  works on a program before its file names the approver.
 
 ## Conventions
 
