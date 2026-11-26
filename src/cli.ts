@@ -1,21 +1,30 @@
 #!/usr/bin/env node
 import { checkProviders, openLogin } from "./commands/auth.ts"
 import { ping } from "./commands/gateway.ts"
+import { scan } from "./commands/hunt.ts"
+import { setSecret, showSecrets } from "./commands/secrets.ts"
+import { STAGE_MODEL } from "./models.ts"
 import { piAgentDir } from "./paths.ts"
 
 const USAGE = `shuvuln: authorised bug bounty research harness
 
 Usage:
-  shuvuln auth status [--json]     Check that shuvuln's own Pi can reach z.ai and OpenAI
-  shuvuln auth login               Open shuvuln's own Pi to run /login
-  shuvuln gateway ping --model <provider/model> [--json]
-                                   Send one tiny prompt through the model gateway
-  shuvuln --help                   Show this text
+  shuvuln auth status [--json]        Check that shuvuln's own Pi can reach z.ai and OpenAI
+  shuvuln auth login                  Open shuvuln's own Pi to run /login
+  shuvuln secret set <name>           Store a token where only you can read it (known: hexbrain)
+  shuvuln secret status [--json]      Say which secrets exist, without printing them
+  shuvuln gateway ping [--model <provider/model>] [--json]
+                                      Send one tiny prompt through a shuvuln stage model
+  shuvuln hunt scan <directory> [--model <provider/model>] [--workers N] [--steps N] [--json]
+                                      Run OpenHack on a directory, through shuvuln's own Pi
+  shuvuln --help                      Show this text
 `
 
-type Arguments =
-  | { ok: true; words: string[]; flags: Set<string>; values: Map<string, string> }
-  | { ok: false; message: string }
+type Options = { flags: Set<string>; values: Map<string, string> }
+type Arguments = ({ ok: true; words: string[] } & Options) | { ok: false; message: string }
+
+/** Options that take a value, in both the `--name value` and `--name=value` spellings. */
+const VALUED = new Set(["model", "workers", "steps"])
 
 function parseArguments(argv: string[]): Arguments {
   const words: string[] = []
@@ -33,22 +42,38 @@ function parseArguments(argv: string[]): Arguments {
       flags.add(name)
       continue
     }
-    if (name === "model" && inline !== undefined) {
-      values.set(name, inline)
-      continue
-    }
-    const next = argv[index + 1]
-    if (name === "model" && next !== undefined && !next.startsWith("--")) {
-      values.set(name, next)
-      consumed.add(index + 1)
-      continue
+    if (name !== undefined && VALUED.has(name)) {
+      const next = argv[index + 1]
+      if (inline !== undefined) {
+        values.set(name, inline)
+        continue
+      }
+      if (next !== undefined && !next.startsWith("--")) {
+        values.set(name, next)
+        consumed.add(index + 1)
+        continue
+      }
     }
     return {
       ok: false,
-      message: name === "model" ? "--model needs a value" : `unknown option ${arg}`,
+      message:
+        name !== undefined && VALUED.has(name)
+          ? `--${name} needs a value`
+          : `unknown option ${arg}`,
     }
   }
   return { ok: true, words, flags, values }
+}
+
+function positiveInteger(
+  value: string | undefined,
+  fallback: number,
+  name: string
+): number | string {
+  if (value === undefined) return fallback
+  const parsed = Number(value)
+  if (!Number.isInteger(parsed) || parsed < 1) return `--${name} needs a positive whole number`
+  return parsed
 }
 
 async function main(argv: string[]): Promise<number> {
@@ -58,7 +83,7 @@ async function main(argv: string[]): Promise<number> {
     return 2
   }
   const { words, flags, values } = parsed
-  const [group, command] = words
+  const [group, command, argument] = words
   if (flags.has("help") || words.length === 0) {
     console.log(USAGE)
     return 0
@@ -76,13 +101,34 @@ async function main(argv: string[]): Promise<number> {
   if (group === "auth" && command === "login" && words.length === 2) {
     return (await openLogin(agentDir)) ?? 1
   }
+  if (group === "secret" && command === "set" && words.length === 3) {
+    return setSecret(argument ?? "")
+  }
+  if (group === "secret" && command === "status" && words.length === 2) {
+    return showSecrets(flags.has("json"))
+  }
   if (group === "gateway" && command === "ping" && words.length === 2) {
-    const model = values.get("model")
-    if (!model) {
-      console.error(`gateway ping needs --model provider/model\n\n${USAGE}`)
+    const model = values.get("model") ?? STAGE_MODEL
+    return ping(model, agentDir, flags.has("json"))
+  }
+  if (group === "hunt" && command === "scan" && words.length === 3) {
+    const workers = positiveInteger(values.get("workers"), 2, "workers")
+    if (typeof workers === "string") {
+      console.error(`${workers}\n\n${USAGE}`)
       return 2
     }
-    return ping(model, agentDir, flags.has("json"))
+    const steps = positiveInteger(values.get("steps"), 6, "steps")
+    if (typeof steps === "string") {
+      console.error(`${steps}\n\n${USAGE}`)
+      return 2
+    }
+    const model = values.get("model")
+    return scan(argument ?? "", {
+      ...(model ? { model } : {}),
+      workers,
+      steps,
+      json: flags.has("json"),
+    })
   }
   console.error(`unknown command ${words.join(" ")}\n\n${USAGE}`)
   return 2

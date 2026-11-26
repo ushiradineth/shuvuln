@@ -13,7 +13,9 @@ Run everything inside `nix develop`, which puts the tools on `PATH` and sets `SH
 - Types only: `just typecheck`. Unit tests only: `just test`
 - Dev dependencies, once: `just install` (pnpm)
 - Provider readiness: `just auth-status`. Login: `just auth-login`
-- Gateway smoke test: `just ping model=zai/glm-5.4`, or any `provider/model`
+- Gateway smoke test: `just ping`, or `just ping model=<provider/model>`
+- Discovery engine smoke test: `just smoke` (OpenHack on `fixtures/notes-app`, costs plan usage)
+- Store a token: `just secret-set hexbrain`. List: `just secrets`
 - Packages: `nix build .#openhack`, `.#pi`, `.#shuvuln`
 
 ## Verified
@@ -33,6 +35,9 @@ Run everything inside `nix develop`, which puts the tools on `PATH` and sets `SH
   and `openai/gpt-6-sol`. See [docs/PROVIDER-TERMS.md](docs/PROVIDER-TERMS.md).
 - A clean clone of the public repository builds the same three store paths, and its flake check
   passes.
+- OpenHack runs through the bundled Pi. On the 60-line fixture, with 2 workers and 4 steps: 19 tasks
+  complete in 206 seconds, 37 calls, 134k tokens in and 14k out, both planted mistakes validated by
+  the full council. OpenHack's own gate passes on the patched tree: 154 tests.
 
 ## Structure
 
@@ -42,6 +47,9 @@ Run everything inside `nix develop`, which puts the tools on `PATH` and sets `SH
   `llm-agents.nix` with its own agent directory.
 - `src/gateway/`: the model gateway. `args.ts` builds the Pi command line, `environment.ts` the
   child environment, `events.ts` the event-stream reader and `run.ts` the runner.
+- `src/hunt/openhack.ts` runs the patched OpenHack. `pkgs/openhack-pi.nix` builds it from the last
+  MIT commit plus `patches/openhack-pi-provider.patch`, so it reaches models only through Pi.
+- `src/models.ts` is the model policy. `src/secrets.ts` stores tokens under `$SHUVULN_HOME/secrets`.
 - `src/commands/`: the commands behind `src/cli.ts`.
 - Run data lives in `$SHUVULN_HOME` (default `~/.local/share/shuvuln`), never in the repository.
 
@@ -59,5 +67,6 @@ Run everything inside `nix develop`, which puts the tools on `PATH` and sets `SH
   [SECURITY.md](SECURITY.md).
 - No request to a program asset. Target code runs only in Docker on an internal network.
 - Model calls go only through shuvuln's own Pi. Never read or copy the system Pi's credentials.
+- shuvuln's own stages run on z.ai (`STAGE_MODEL`). OpenAI is for OpenHack only (`OPENHACK_MODEL`).
 - No credentials in code, prompts, containers, logs or commits.
 - Commit, publish, deploy and any apply happen only on Shu's word. Do not bypass hooks.

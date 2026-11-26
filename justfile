@@ -30,6 +30,18 @@ auth-status:
 auth-login:
   node src/cli.ts auth login
 
-# Send one tiny prompt through the model gateway.
-ping model="zai/glm-5.4":
-  node src/cli.ts gateway ping --model "{{model}}"
+# Send one tiny prompt through the model gateway. With no model it uses a z.ai stage model.
+ping model="":
+  node src/cli.ts gateway ping {{model}}
+
+# Run OpenHack on the smoke fixture, through shuvuln's own Pi, on OpenAI. Costs plan usage.
+smoke workers="2" steps="4":
+  node src/cli.ts hunt scan fixtures/notes-app --workers {{workers}} --steps {{steps}}
+
+# Store a token where only you can read it. It is typed hidden and never printed back.
+secret-set name="hexbrain":
+  node src/cli.ts secret set {{name}}
+
+# Say which secrets exist.
+secrets:
+  node src/cli.ts secret status

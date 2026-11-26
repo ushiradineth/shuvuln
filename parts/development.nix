@@ -91,6 +91,7 @@
     devShells.default = pkgs.mkShell {
       name = "shuvuln";
       packages = [
+        pkgs.bun
         pkgs.nodejs
         pkgs.pnpm
         pkgs.typescript
@@ -102,12 +103,14 @@
         pkgs.just
         config.treefmt.build.wrapper
         self'.packages.openhack
+        self'.packages.openhack-pi
         self'.packages.pi
       ];
       shellHook = ''
         ${preCommitCheck.shellHook}
         export SHUVULN_HOME="''${SHUVULN_HOME:-$HOME/.local/share/shuvuln}"
         export SHUVULN_PI=${self'.packages.pi}/bin/pi
+        export SHUVULN_OPENHACK=${self'.packages.openhack-pi}/bin/openhack-pi
       '';
     };
   };

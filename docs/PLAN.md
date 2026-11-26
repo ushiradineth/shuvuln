@@ -16,15 +16,16 @@ HackerOne, OpenAI or z.ai account ends the income.
 
 ## Decisions recorded
 
-| #   | Decision                                                                                                              | Note                                                            |
-| --- | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| 1   | Every model call goes through shuvuln's own Pi: z.ai Coding Plan and OpenAI through a Codex plan                      | Pi is a tool both plans support. See "Model access"             |
-| 2   | shuvuln's Pi is bundled from llm-agents.nix, with its own agent directory and its own logins                          | The Pi on the system is never used                              |
-| 3   | Pilot target: Mattermost on Bugcrowd, Playbooks plugin first                                                          | Scope confirmed from public program data today                  |
-| 4   | Spend up to the providers' limits                                                                                     | Cost per proven finding is tracked anyway                       |
-| 5   | Home: `~/Code/shuvuln`, public GitHub repository                                                                      | The repository is created only after Shu's explicit go          |
-| 6   | Nix flake for dependencies, Docker for isolated workloads, NixOS module for the always-on worker                      | See "Isolation"                                                 |
-| 7   | The orchestrator stays in TypeScript. Rust only where a measurement shows a need, behind a JSON command-line boundary | It sits between Pi and OpenHack, where the time goes to waiting |
+| #   | Decision                                                                                                              | Note                                                                  |
+| --- | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| 1   | Every model call goes through shuvuln's own Pi: z.ai Coding Plan and OpenAI through a Codex plan                      | Pi is a tool both plans support. See "Model access"                   |
+| 2   | shuvuln's Pi is bundled from llm-agents.nix, with its own agent directory and its own logins                          | The Pi on the system is never used                                    |
+| 3   | Pilot target: Mattermost on Bugcrowd, Playbooks plugin first                                                          | Scope confirmed from public program data today                        |
+| 4   | Spend up to the providers' limits                                                                                     | Cost per proven finding is tracked anyway                             |
+| 5   | Home: `~/Code/shuvuln`, public GitHub repository                                                                      | The repository is created only after Shu's explicit go                |
+| 6   | Nix flake for dependencies, Docker for isolated workloads, NixOS module for the always-on worker                      | See "Isolation"                                                       |
+| 7   | The orchestrator stays in TypeScript. Rust only where a measurement shows a need, behind a JSON command-line boundary | It sits between Pi and OpenHack, where the time goes to waiting       |
+| 8   | Model policy: shuvuln's own stages run on z.ai GLM 5.4. OpenAI is for OpenHack only                                   | Decided by Shu on 2026-11-26. Both are reached through the bundled Pi |
 
 ## Facts checked on 2026-11-24
 
@@ -239,10 +240,16 @@ Met on 2026-11-24.
 
 ### Phase 1: OpenHack through Pi, baseline and answer key
 
-1. Add a `pi` provider to OpenHack at the last MIT commit (`fc9d444f`), modelled on its subscription
-   adapters: one stateless Pi call per round, the same JSON envelope, the same fail-closed event
-   checks, usage read from Pi's stream. Ship it as a patch file and build OpenHack from source in
-   the flake. The release binary stays as the unmodified control.
+1. Done on 2026-11-26. A `pi` provider for OpenHack at the last MIT commit (`fc9d444f`), kept as
+   `patches/openhack-pi-provider.patch` and built in the flake as `openhack-pi`. It is modelled on
+   the subscription adapters: one stateless Pi call per round, the same JSON envelope, fail-closed
+   event checks, usage read from Pi's stream. Pi cannot enforce a schema, so the adapter takes the
+   first complete envelope of a reply, closes a reply left open at its end, and reports both in the
+   event log. OpenHack's own gate passes on the patched tree (154 tests). Evidence on the 60-line
+   fixture, 2 workers, 4 steps: 19 tasks complete in 206 seconds, 37 calls, 134k tokens in and 14k
+   out. Both planted mistakes were validated by the full council. 7 further candidates were held
+   back as uncertain. Before the fix, 8 of 18 tasks failed on glued or truncated replies.
+
 2. Answer key for Mattermost: its 19 disclosed HackerOne reports from HexBrain, each paired with the
    pre-fix and post-fix refs. The advisory list on `docs.mattermost.com` did not parse, so the
    pairing method is settled here.

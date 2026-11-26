@@ -29,7 +29,11 @@ just install      # once: the TypeScript dev dependencies
 just auth-login   # opens shuvuln's own Pi: /login for z.ai and OpenAI, then /exit
 just auth-status  # both providers should print ready
 just ping         # one tiny model call through the gateway
+just smoke        # OpenHack on a 60-line fixture, through shuvuln's own Pi
 ```
+
+One command stores a token where only you can read it, typed hidden and never printed back:
+`just secret-set hexbrain`. `just secrets` then says which secrets exist.
 
 Before the login, `just auth-status` prints `not_ready` for both providers and `just ping` fails
 with Pi's own hint.
@@ -46,19 +50,22 @@ credentials.
 
 ## Commands
 
-| Command             | Does                                                           |
-| ------------------- | -------------------------------------------------------------- |
-| `just fmt`          | Format every file the tree covers                              |
-| `just check`        | `nix flake check`: hooks, types, unit tests, package builds    |
-| `just typecheck`    | `tsc --noEmit` inside the shell                                |
-| `just test`         | Unit tests inside the shell                                    |
-| `just ping model=…` | Send one prompt through a chosen model, written provider/model |
+| Command                    | Does                                                        |
+| -------------------------- | ----------------------------------------------------------- |
+| `just fmt`                 | Format every file the tree covers                           |
+| `just check`               | `nix flake check`: hooks, types, unit tests, package builds |
+| `just typecheck`           | `tsc --noEmit` inside the shell                             |
+| `just test`                | Unit tests inside the shell                                 |
+| `just ping`                | One prompt through a shuvuln stage model (z.ai by default)  |
+| `just smoke`               | OpenHack on the smoke fixture, on OpenAI. Costs plan usage  |
+| `just secret-set hexbrain` | Store the HexBrain token in `$SHUVULN_HOME/secrets`         |
+| `just secrets`             | Say which secrets exist, without printing them              |
 
 ## Layout
 
-`parts/` holds the flake modules, `pkgs/` the two pinned packages, `src/gateway/` the model gateway
-and `src/commands/` the commands behind `src/cli.ts`. Run data never enters the repository: it lives
-under `$SHUVULN_HOME`.
+`parts/` holds the flake modules, `pkgs/` the pinned packages, `patches/` the OpenHack `pi`
+provider, `src/gateway/` the model gateway, `src/hunt/` the OpenHack runner and `src/commands/` the
+commands behind `src/cli.ts`.
 
 ## Licence
 

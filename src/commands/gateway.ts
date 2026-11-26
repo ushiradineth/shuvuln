@@ -7,7 +7,7 @@ export async function ping(model: string, agentDir: string, json = false): Promi
   try {
     const run = await runPi({ model, agentDir, prompt: PING_PROMPT })
     if (json) {
-      console.log(JSON.stringify(run, null, 2))
+      console.log(JSON.stringify({ model, ...run }, null, 2))
     } else {
       console.log(`model:  ${model}`)
       console.log(`text:   ${JSON.stringify(run.text)}`)
