@@ -9,9 +9,13 @@ export interface Triage {
   reason: string
   model: string
   usage: { input: number; output: number }
+  version?: number
 }
 
 const README_BYTES = 12_000
+
+/** Bumped whenever the question changes, so older verdicts are not reused. */
+export const TRIAGE_VERSION = 2
 
 /** README text from the default branch, capped; raw files are outside the GitHub API's limit. */
 export async function readReadme(repository: Repository): Promise<string | undefined> {
@@ -45,6 +49,8 @@ ${readme ?? "(no README found)"}
 
 Decide whether this repository deserves a deep review aimed at a paid report. Keep it when it is an application, service, plugin or extension with its own attack surface: routes, handlers, permissions, stored data. Drop documentation, examples, test suites, design assets, and thin SDK or client wrappers whose logic runs on someone else's machine.
 
+The review reads Go, TypeScript, JavaScript, Python, PHP, Ruby and Java application logic well. It reads C, C++, Rust, Solidity, Move and Sui Move poorly, so drop a repository whose security rests on memory safety, cryptography, protocol parsing or on-chain value flows unless most of its logic is application code in the first group.
+
 Answer with one JSON object and nothing else:
 {"keep": true, "kind": "plugin", "attack_surface": "one sentence", "reason": "one sentence"}
 kind is one of: plugin, application, library, sdk, docs, examples, other.`
@@ -74,5 +80,5 @@ export function parseTriage(text: string, model: string, usage: Triage["usage"])
   const attackSurface = sentence("attack_surface")
   const reason = sentence("reason")
   if (typeof record.keep !== "boolean" || !kind || !attackSurface || !reason) return null
-  return { keep: record.keep, kind, attackSurface, reason, model, usage }
+  return { keep: record.keep, kind, attackSurface, reason, model, usage, version: TRIAGE_VERSION }
 }

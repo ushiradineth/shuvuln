@@ -2,7 +2,7 @@ import assert from "node:assert/strict"
 import { describe, it } from "node:test"
 import type { Program } from "./dataset.ts"
 import { score } from "./score.ts"
-import { parseTriage, triagePrompt } from "./triage.ts"
+import { TRIAGE_VERSION, parseTriage, triagePrompt } from "./triage.ts"
 
 const program: Program = {
   platform: "bugcrowd",
@@ -29,6 +29,7 @@ describe("tier 2 triage", () => {
       usage
     )
     assert.deepEqual(clean, {
+      version: TRIAGE_VERSION,
       keep: true,
       kind: "plugin",
       attackSurface: "Routes.",

@@ -8,7 +8,13 @@ import {
   readDump,
 } from "../funnel/dataset.ts"
 import { type Candidate, type RepoFacts, factsKey, rank } from "../funnel/score.ts"
-import { type Triage, parseTriage, readReadme, triagePrompt } from "../funnel/triage.ts"
+import {
+  TRIAGE_VERSION,
+  type Triage,
+  parseTriage,
+  readReadme,
+  triagePrompt,
+} from "../funnel/triage.ts"
 import { runPi } from "../gateway/run.ts"
 import { STAGE_MODEL } from "../models.ts"
 import { piAgentDir } from "../paths.ts"
@@ -228,7 +234,8 @@ export async function triageTargets(options: { limit: number; json: boolean }): 
     for (const candidate of candidates) {
       const key = factsKey(candidate.repository)
       const cached = triages.get(key)
-      if (cached) continue
+      if (cached?.version === TRIAGE_VERSION) continue
+      triages.delete(key)
       const readme = await readReadme(candidate.repository)
       const run = await runPi({
         model: STAGE_MODEL,
