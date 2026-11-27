@@ -55,7 +55,7 @@ function parseArguments(argv: string[]): Arguments {
       continue
     }
     const [name, inline] = arg.slice(2).split("=", 2)
-    if (name === "json" || name === "help") {
+    if (name === "json" || name === "help" || name === "plant-only") {
       flags.add(name)
       continue
     }
