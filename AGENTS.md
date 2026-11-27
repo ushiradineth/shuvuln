@@ -23,6 +23,8 @@ Run everything inside `nix develop`, which puts the tools on `PATH` and sets `SH
 - Lab: `node src/cli.ts lab up` starts Mattermost 12.1.0 and PostgreSQL on an internal Docker
   network, creates three accounts, a channel and installs the Teams Meetings plugin; `lab down`
   removes it. `node src/cli.ts prove msteams-props-hijack` runs one attack there with a control.
+  With `--plant-only` it only plants the post, so a person can run the command in a browser and see
+  the button.
 - Packages: `nix build .#openhack`, `.#pi`, `.#shuvuln`
 
 ## Verified

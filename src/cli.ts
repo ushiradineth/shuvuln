@@ -3,7 +3,7 @@ import { checkProviders, openLogin } from "./commands/auth.ts"
 import { ping } from "./commands/gateway.ts"
 import { enrich, fetchTargets, rankTargets, triageTargets } from "./commands/funnel.ts"
 import { scan } from "./commands/hunt.ts"
-import { labDown, labUp, provePropsHijack } from "./commands/lab.ts"
+import { labDown, labUp, plantPropsHijack, provePropsHijack } from "./commands/lab.ts"
 import { checkPrograms } from "./commands/program.ts"
 import { triage } from "./commands/triage.ts"
 import { setSecret, showSecrets } from "./commands/secrets.ts"
@@ -31,7 +31,9 @@ Usage:
                                       Tier 2: one short stage-model call per candidate, keep or drop
   shuvuln program check [dir] [--json] Validate approved program files, programs/ by default
   shuvuln lab up | down                Start or remove the isolated Mattermost lab, with the plugin
-  shuvuln prove msteams-props-hijack     Run one candidate's attack in the lab and check the effect
+  shuvuln prove msteams-props-hijack [--plant-only]
+                                      Run one candidate's attack in the lab and check the effect;
+                                      --plant-only leaves the command for a person to run in a browser
   shuvuln --help                      Show this text
 `
 
@@ -157,7 +159,7 @@ async function main(argv: string[]): Promise<number> {
   if (group === "lab" && command === "up" && words.length === 2) return labUp()
   if (group === "lab" && command === "down" && words.length === 2) return labDown()
   if (group === "prove" && command === "msteams-props-hijack" && words.length === 2)
-    return provePropsHijack()
+    return flags.has("plant-only") ? plantPropsHijack() : provePropsHijack()
   if (group === "program" && command === "check" && words.length <= 3)
     return checkPrograms(argument ?? "programs", flags.has("json"))
   if (
