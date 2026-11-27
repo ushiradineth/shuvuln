@@ -50,20 +50,22 @@ credentials.
 
 ## Commands
 
-| Command                    | Does                                                           |
-| -------------------------- | -------------------------------------------------------------- |
-| `just fmt`                 | Format every file the tree covers                              |
-| `just check`               | `nix flake check`: hooks, types, unit tests, package builds    |
-| `just typecheck`           | `tsc --noEmit` inside the shell                                |
-| `just test`                | Unit tests inside the shell                                    |
-| `just ping`                | One prompt through a shuvuln stage model (z.ai by default)     |
-| `just smoke`               | OpenHack on the smoke fixture, on OpenAI. Costs plan usage     |
-| `just secret-set hexbrain` | Store the HexBrain token in `$SHUVULN_HOME/secrets`            |
-| `just secrets`             | Say which secrets exist, without printing them                 |
-| `hunt triage`              | Label a saved scan's findings with fixes already published     |
-| `funnel fetch`, `rank`     | Rank every program with source in scope, no model involved     |
-| `funnel enrich`, `triage`  | Repository facts from GitHub, then one cheap keep-or-drop call |
-| `program check`            | Validate the approved program files under `programs/`          |
+| Command                      | Does                                                           |
+| ---------------------------- | -------------------------------------------------------------- |
+| `just fmt`                   | Format every file the tree covers                              |
+| `just check`                 | `nix flake check`: hooks, types, unit tests, package builds    |
+| `just typecheck`             | `tsc --noEmit` inside the shell                                |
+| `just test`                  | Unit tests inside the shell                                    |
+| `just ping`                  | One prompt through a shuvuln stage model (z.ai by default)     |
+| `just smoke`                 | OpenHack on the smoke fixture, on OpenAI. Costs plan usage     |
+| `just secret-set hexbrain`   | Store the HexBrain token in `$SHUVULN_HOME/secrets`            |
+| `just secrets`               | Say which secrets exist, without printing them                 |
+| `hunt triage`                | Label a saved scan's findings with fixes already published     |
+| `funnel fetch`, `rank`       | Rank every program with source in scope, no model involved     |
+| `funnel enrich`, `triage`    | Repository facts from GitHub, then one cheap keep-or-drop call |
+| `program check`              | Validate the approved program files under `programs/`          |
+| `lab up`, `lab down`         | An isolated Mattermost with the plugin, in Docker              |
+| `prove msteams-props-hijack` | Reproduce one finding in the lab, with a control               |
 
 ## Layout
 

@@ -49,3 +49,13 @@ time.
 ## NixOS, for the always-on worker
 
 The orchestrator runs as a hardened systemd service. Target code still runs in Docker.
+
+## Lab
+
+The lab runs the target, not the researcher's tools. `lab up` downloads the Mattermost image and the
+plugin release on the host, then starts both containers on a Docker network created with
+`--internal`, which has no route out. Mattermost's database is a second container on the same
+network. The host reaches Mattermost by its address on that network, which OrbStack routes, to
+create accounts and to run the proof. The plugin's OAuth settings are placeholders, so no Microsoft
+call can succeed, and none is needed for the candidate under test. Lab accounts and their passwords
+are fixed and exist only in the lab's data, which `lab down` removes.

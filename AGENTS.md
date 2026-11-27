@@ -20,6 +20,9 @@ Run everything inside `nix develop`, which puts the tools on `PATH` and sets `SH
   It labels each finding with the vendor fix that already covers it
 - Target funnel, inside `nix develop`: `node src/cli.ts funnel fetch`, then `funnel rank`,
   `funnel enrich` and `funnel triage`. `node src/cli.ts program check` validates `programs/`
+- Lab: `node src/cli.ts lab up` starts Mattermost 12.1.0 and PostgreSQL on an internal Docker
+  network, creates three accounts, a channel and installs the Teams Meetings plugin; `lab down`
+  removes it. `node src/cli.ts prove msteams-props-hijack` runs one attack there with a control.
 - Packages: `nix build .#openhack`, `.#pi`, `.#shuvuln`
 
 ## Verified
@@ -39,6 +42,9 @@ Run everything inside `nix develop`, which puts the tools on `PATH` and sets `SH
   and `openai/gpt-6-sol`. See [docs/PROVIDER-TERMS.md](docs/PROVIDER-TERMS.md).
 - A clean clone of the public repository builds the same three store paths, and its flake check
   passes.
+- The lab reproduces `msteams-props-hijack` on Mattermost 12.1.0 with plugin v3.0.0: with a planted
+  post the bot offers the attacker's link, without one it offers none. Two runs in a row. Evidence
+  lands in `$SHUVULN_HOME/proofs`.
 - `funnel fetch` finds 80 programs with source in scope at the pinned dump, 326 pairs. Tier 2 on the
   top 40 kept 25 and dropped 15 client SDK wrappers, for 90k z.ai tokens.
 - `hunt triage` on the Playbooks run paired both ignore-endpoint findings with MMSA-2024-00350 and
@@ -68,6 +74,8 @@ Run everything inside `nix develop`, which puts the tools on `PATH` and sets `SH
   without a model, `triage.ts` is tier 2 with one stage-model call per candidate.
 - `src/program/policy.ts` validates `programs/*.ts`. Run data from the funnel is in
   `$SHUVULN_HOME/funnel`.
+- `src/lab/mattermost.ts`: the isolated lab. Docker for the target, the Mattermost API for setup and
+  accounts, the event stream for observing what a plugin posts.
 - Run data lives in `$SHUVULN_HOME` (default `~/.local/share/shuvuln`), never in the repository.
 - `programs/`: one approved engagement policy per program as a TypeScript module, written from the
   program's brief. Nothing works on a program before its file names the approver.
@@ -85,6 +93,8 @@ Run everything inside `nix develop`, which puts the tools on `PATH` and sets `SH
 - Authorised targets only, each approved in its own program file before work starts. See
   [SECURITY.md](SECURITY.md).
 - No request to a program asset. Target code runs only in Docker on an internal network.
+- The lab pulls the Mattermost image and the plugin bundle at setup, then runs on a network with no
+  way out. Its plugin settings are placeholders, so no Microsoft call can succeed.
 - Model calls go only through shuvuln's own Pi. Never read or copy the system Pi's credentials.
 - shuvuln's own stages run on z.ai (`STAGE_MODEL`). OpenAI is for OpenHack only (`OPENHACK_MODEL`).
 - No credentials in code, prompts, containers, logs or commits.

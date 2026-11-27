@@ -126,6 +126,24 @@ public issues and from the advisory feed:
 
 Neither is proven. Both need the Phase 4 lab before anything is reported.
 
+## Phase 4, started 2026-11-26: the lab and the first proof
+
+`lab up` starts Mattermost 12.1.0 and PostgreSQL on an internal Docker network, the one image
+Mattermost publishes for that version under emulation, and installs the Teams Meetings plugin v3.0.0
+with placeholder OAuth settings. Through Mattermost's API it creates three accounts, a team and a
+channel, with both ordinary accounts in the channel. Twenty seconds in all.
+
+`prove msteams-props-hijack` runs the attack as the attacker and the victim and reads the victim's
+event stream. Control first: the victim runs `/mstmeetings start` with nothing planted, and the bot
+posts no meeting post. Then the attacker posts a message whose properties carry a meeting link and a
+creator name, the victim runs the same command, and the bot's ephemeral post carries the attacker's
+link and name with status `RECENTLY_CREATED`. Two runs in a row, on 2026-11-26. The evidence is in
+`$SHUVULN_HOME/proofs/msteams-props-hijack.json`.
+
+That closes the loop for one candidate: scan, review in the code, isolated proof with a control. The
+plugin has no fix yet, so there is no patched build to compare against. The second candidate, the
+OAuth state, still needs its proof.
+
 ## Autonomy and human gates
 
 Autonomous, unattended, within budgets:
