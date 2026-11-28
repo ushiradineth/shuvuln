@@ -142,7 +142,11 @@ link and name with status `RECENTLY_CREATED`. Two runs in a row, on 2026-11-26. 
 
 That closes the loop for one candidate: scan, review in the code, isolated proof with a control. The
 plugin has no fix yet, so there is no patched build to compare against. The second candidate, the
-OAuth state, still needs its proof.
+OAuth state, has a partial proof on 2026-11-26: `prove msteams-oauth-state` shows the state is what
+an attacker computes from the victim's ID, the channel ID and a flag, that a wrong channel is
+refused, and that the victim's session is accepted with the attacker's code up to the token
+exchange, which the lab cannot reach. The complete chain needs two Microsoft work accounts.
+Write-ups for both candidates are drafts in `$SHUVULN_HOME/reports`, for Shu to rewrite.
 
 ## Autonomy and human gates
 
