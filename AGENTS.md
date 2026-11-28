@@ -25,6 +25,8 @@ Run everything inside `nix develop`, which puts the tools on `PATH` and sets `SH
   removes it. `node src/cli.ts prove msteams-props-hijack` runs one attack there with a control.
   With `--plant-only` it only plants the post, so a person can run the command in a browser and see
   the button.
+- `node src/cli.ts prove msteams-oauth-state` is a partial proof: the state is predictable, a wrong
+  one is refused, and a crafted callback in the victim's session fails only at the token exchange.
 - Packages: `nix build .#openhack`, `.#pi`, `.#shuvuln`
 
 ## Verified
